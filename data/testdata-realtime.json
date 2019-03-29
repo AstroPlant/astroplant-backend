@@ -1,0 +1,14 @@
+{
+  "value_schema_id": 1,
+  "records": [
+    {
+      "value": {
+        "datetime": "",
+        "peripheral": 1,
+        "physical_quantity": "Temperature",
+        "physical_unit": "Degrees Celsius",
+        "value": 42.0
+      }
+    }
+  ]
+}
