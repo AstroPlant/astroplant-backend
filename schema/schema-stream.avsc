@@ -3,12 +3,13 @@
         {
             "doc": "Date and time of the measurement in ISO8601 format.",
             "name": "datetime",
-            "type": "string"
+            "type": "long",
+            "logicalType": "timestamp-millis"
         },
         {
             "doc": "Identifier of the peripheral that made the measurement.",
             "name": "peripheral",
-            "type": "int"
+            "type": "string"
         },
         {
             "doc": "Physical quantity of the measurement (e.g. Temperature).",
@@ -28,4 +29,4 @@
     ],
     "name": "MeasurementRecord",
     "type": "record"
-}"
+}

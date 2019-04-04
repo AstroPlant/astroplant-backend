@@ -3,12 +3,14 @@
         {
             "doc": "Start date and time of the aggregate measurement in ISO8601 format.",
             "name": "start_datetime",
-            "type": "string"
+            "type": "long",
+            "logicalType": "timestamp-millis"
         },
         {
             "doc": "End date and time of the aggregate measurement in ISO8601 format.",
             "name": "end_datetime",
-            "type": "string"
+            "type": "long",
+            "logicalType": "timestamp-millis"
         },
         {
             "doc": "Type of the aggregate (e.g. AVERAGE or MAX).",
@@ -18,7 +20,7 @@
         {
             "doc": "Identifier of the peripheral that made the measurement.",
             "name": "peripheral",
-            "type": "int"
+            "type": "string"
         },
         {
             "doc": "Physical quantity of the measurement (e.g. Temperature).",
