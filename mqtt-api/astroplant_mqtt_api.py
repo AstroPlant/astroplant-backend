@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
     logger.debug('Creating Kafka producer.')
     kafka_producer = KafkaProducer(
-        bootstrap_servers=os.environ.get('KAFKA_SERVER', 'message-broker.ops:9092'),
+        bootstrap_servers=f"{os.environ.get('KAFKA_SERVER', 'kafka.ops')}:{os.environ.get('KAFKA_PORT', '9092')}",
         client_id="astroplant-mqtt-kafka-connector",
         acks=1 # Topic leader must acknowledge our messages.
     )
