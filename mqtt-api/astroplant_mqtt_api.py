@@ -110,7 +110,7 @@ if __name__ == "__main__":
     logger.addHandler(ch)
 
     logger.debug('Creating Kafka producer.')
-    host = os.environ.get('KAFKA_SERVER', 'kafka.ops')
+    host = os.environ.get('KAFKA_HOST', 'kafka.ops')
     port = os.environ.get('KAFKA_PORT', '9092')
     kafka_producer = KafkaProducer(
         bootstrap_servers=f"{host}:{port}",
