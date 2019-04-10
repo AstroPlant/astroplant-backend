@@ -241,12 +241,20 @@ class Peripheral(Base):
     )
     removed_datetime = Column(UTCDateTime, nullable=True)
 
+    kit = relationship(
+        'Kit',
+        back_populates='peripherals',
+    )
     peripheral_definition = relationship(
         'PeripheralDefinition',
         back_populates='peripherals',
     )
 
-
+Kit.peripherals = relationship(
+    'Peripheral',
+    order_by=Peripheral.id,
+    back_populates='kit',
+)
 PeripheralDefinition.peripherals = relationship(
     'Peripheral',
     order_by=Peripheral.id,
