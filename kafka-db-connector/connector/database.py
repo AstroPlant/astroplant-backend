@@ -38,6 +38,10 @@ class UTCDateTime(types.TypeDecorator):
             return value
 
 
+def utc_now():
+    return datetime.datetime.now(tz=datetime.timezone.utc)
+
+
 class User(Base):
     """
     Model for AstroPlant users.
@@ -92,7 +96,11 @@ class KitMembership(Base):
         nullable=False,
         index=True,
     )
-    datetime_linked = Column(UTCDateTime, nullable=False)
+    datetime_linked = Column(
+        UTCDateTime,
+        nullable=False,
+        default=utc_now
+    )
 
     user = relationship('User', back_populates='kits')
     kit = relationship('Kit', back_populates='users')
@@ -226,8 +234,12 @@ class Peripheral(Base):
     )
     name = Column(String(255), nullable=False)
     active = Column(Boolean, nullable=False, default=True)
-    added_datetime = Column(UTCDateTime)
-    removed_datetime = Column(UTCDateTime)
+    added_datetime = Column(
+        UTCDateTime,
+        nullable=False,
+        default=utc_now,
+    )
+    removed_datetime = Column(UTCDateTime, nullable=True)
 
     peripheral_definition = relationship(
         'PeripheralDefinition',
