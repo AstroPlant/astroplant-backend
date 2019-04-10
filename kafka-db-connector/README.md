@@ -7,6 +7,6 @@ and inserts them into the PostgreSQL database.
 |-|-|-|
 | `DATABASE_HOST` | The hostname of the database server. | `database.ops` |
 | `DATABASE_PORT` | The port of the database server. | `5432` |
-| `DATABASE_USER` | The username for database authentication. | `astroplant` |
+| `DATABASE_USERNAME` | The username for database authentication. | `astroplant` |
 | `DATABASE_PASSWORD` | The password for database authentication. | `astroplant` |
 | `DATABASE_DATABASE` | The name of the AstroPlant database on the server. | `astroplant` |

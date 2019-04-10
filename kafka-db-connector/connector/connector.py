@@ -18,7 +18,7 @@ if __name__ == '__main__':
     db = DatabaseManager(
         host=os.environ.get('DATABASE_HOST', 'database.ops'),
         port=int(os.environ.get('DATABASE_PORT', '5432')),
-        user=os.environ.get('DATABASE_USER', 'astroplant'),
+        username=os.environ.get('DATABASE_USERNAME', 'astroplant'),
         password=os.environ.get('DATABASE_PASSWORD', 'astroplant'),
         database=os.environ.get('DATABASE_DATABASE', 'astroplant'),
     )
