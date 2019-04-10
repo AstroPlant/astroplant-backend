@@ -423,7 +423,7 @@ class DatabaseManager(object):
         self.Session.add(qt_light_intensity)
 
         config_time_sleep = PeripheralConfigurationDefinition(
-            name = "Time sleep",
+            name = "time_sleep",
             default_value = "3000",
             description = "Time to sleep between measurements in milliseconds.",
         )
