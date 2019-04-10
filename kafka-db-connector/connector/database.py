@@ -346,9 +346,13 @@ class DatabaseManager(object):
     as well as utility functions.
     """
 
-    def __init__(self):
+    def __init__(self, host, port, user, password, database):
         self.engine = create_engine(
-            'postgresql+psycopg2://astroplant:astroplant@database.ops:5432/astroplant',
+            (
+                'postgresql+psycopg2://'
+                f'{user}{":" + password if password else ""}'
+                f'@{host}:{port}/{database}'
+            ),
             isolation_level='READ COMMITTED',
         )
 
