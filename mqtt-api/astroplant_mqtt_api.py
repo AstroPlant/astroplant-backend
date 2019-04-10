@@ -11,12 +11,13 @@ class Server(object):
     AstroPlant MQTT API.
     """
 
-    def __init__(self, host, port, username, password, kafka_producer, keepalive=10):
+    def __init__(self, host, port, username, password, kafka_producer,
+                 keepalive=1):
         self._host = host
         self._port = port
         self._keepalive = keepalive
         self._kafka_producer = kafka_producer
-        
+
         self.connected = False
 
         self._mqtt_client = mqtt.Client()
@@ -41,7 +42,11 @@ class Server(object):
         """
         Start the client. Blocking.
         """
-        self._mqtt_client.connect(host=self._host, port=self._port, keepalive=self._keepalive)
+        self._mqtt_client.connect(
+            host=self._host,
+            port=self._port,
+            keepalive=self._keepalive,
+        )
         self._mqtt_client.loop_forever()
 
     def stop(self):
@@ -63,7 +68,7 @@ class Server(object):
     def _on_message(self, client, user_data, msg):
         topic = msg.topic.split("/")
         payload = BytesIO(msg.payload)
-        
+
         if (
                 len(topic) != 4
                 or topic[0] != "kit"
@@ -71,13 +76,13 @@ class Server(object):
                 or topic[3] != "aggregate"
         ):
             return
-        
+
         serial = topic[1]
         message = fastavro.schemaless_reader(payload, self._aggregate_schema)
         message['kit_serial'] = serial
 
         logger.debug(f"Message received and sending to Kafka: {message}")
-        
+
         msg = BytesIO()
         fastavro.schemaless_writer(
             msg,
@@ -85,7 +90,10 @@ class Server(object):
             message
         )
 
-        self._kafka_producer.send(topic="measurement_aggregate", value=msg.getvalue())
+        self._kafka_producer.send(
+            topic="measurement_aggregate",
+            value=msg.getvalue(),
+        )
 
 if __name__ == "__main__":
     logger = logging.getLogger("AstroPlant_MQTT_API")
@@ -94,14 +102,18 @@ if __name__ == "__main__":
     ch = logging.StreamHandler()
     ch.setLevel(logging.getLevelName(os.environ.get('LOG_LEVEL', 'INFO')))
 
-    formatter = logging.Formatter('%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s'
+    )
 
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
     logger.debug('Creating Kafka producer.')
+    host = os.environ.get('KAFKA_SERVER', 'kafka.ops')
+    port = os.environ.get('KAFKA_PORT', '9092')
     kafka_producer = KafkaProducer(
-        bootstrap_servers=f"{os.environ.get('KAFKA_SERVER', 'kafka.ops')}:{os.environ.get('KAFKA_PORT', '9092')}",
+        bootstrap_servers=f"{host}:{port}",
         client_id="astroplant-mqtt-kafka-connector",
         acks=1 # Topic leader must acknowledge our messages.
     )
@@ -117,4 +129,3 @@ if __name__ == "__main__":
 
     logger.info('Starting.')
     server.start()
-
