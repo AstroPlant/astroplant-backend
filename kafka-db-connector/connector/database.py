@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship
 
 
-logger = logging.getLogger("astroplant.connector")
+logger = logging.getLogger('astroplant.connector')
 
 Base = declarative_base()
 
@@ -82,20 +82,20 @@ class KitMembership(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(
         Integer,
-        ForeignKey(User.id, onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey(User.id, onupdate='CASCADE', ondelete='CASCADE'),
         nullable=False,
         index=True,
     )
     kit_id = Column(
         Integer,
-        ForeignKey(Kit.id, onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey(Kit.id, onupdate='CASCADE', ondelete='CASCADE'),
         nullable=False,
         index=True,
     )
     datetime_linked = Column(UTCDateTime, nullable=False)
 
-    user = relationship("User", back_populates="kits")
-    kit = relationship("Kit", back_populates="users")
+    user = relationship('User', back_populates='kits')
+    kit = relationship('Kit', back_populates='users')
 
 
 User.kits = relationship(
@@ -157,9 +157,9 @@ class PeripheralDefinition(Base):
     module_name = Column(String(255), nullable=False)
     class_name = Column(String(255), nullable=False)
     quantity_types = relationship(
-        "QuantityType",
+        'QuantityType',
         secondary=peripheral_definition_expected_quantity_types,
-        backref="peripheral_definitions"
+        backref='peripheral_definitions'
     )
 
 
@@ -175,8 +175,8 @@ class PeripheralConfigurationDefinition(Base):
         Integer,
         ForeignKey(
             PeripheralDefinition.id,
-            onupdate="CASCADE",
-            ondelete="CASCADE",
+            onupdate='CASCADE',
+            ondelete='CASCADE',
             ),
         nullable=False,
     )
@@ -211,7 +211,7 @@ class Peripheral(Base):
     id = Column(Integer, primary_key=True)
     kit_id = Column(
         Integer,
-        ForeignKey(Kit.id, onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey(Kit.id, onupdate='CASCADE', ondelete='CASCADE'),
         nullable=False,
         index=True,
     )
@@ -219,8 +219,8 @@ class Peripheral(Base):
         Integer,
         ForeignKey(
             PeripheralDefinition.id,
-            onupdate="CASCADE",
-            ondelete="CASCADE",
+            onupdate='CASCADE',
+            ondelete='CASCADE',
         ),
         nullable=False,
     )
@@ -253,8 +253,8 @@ class PeripheralConfiguration(Base):
         Integer,
         ForeignKey(
             Peripheral.id,
-            onupdate="CASCADE",
-            ondelete="CASCADE",
+            onupdate='CASCADE',
+            ondelete='CASCADE',
         ),
         nullable=False,
     )
@@ -262,8 +262,8 @@ class PeripheralConfiguration(Base):
         Integer,
         ForeignKey(
             PeripheralConfigurationDefinition.id,
-            onupdate="CASCADE",
-            ondelete="CASCADE",
+            onupdate='CASCADE',
+            ondelete='CASCADE',
         ),
         nullable=False,
     )
@@ -301,13 +301,13 @@ class Measurement(Base):
     id = Column(Integer, primary_key=True)
     peripheral_id = Column(
         Integer,
-        ForeignKey(Peripheral.id, onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey(Peripheral.id, onupdate='CASCADE', ondelete='CASCADE'),
         nullable=False,
         index=True,
     )
     kit_id = Column(
         Integer,
-        ForeignKey(Kit.id, onupdate="CASCADE", ondelete="CASCADE"),
+        ForeignKey(Kit.id, onupdate='CASCADE', ondelete='CASCADE'),
         nullable=False,
         index=True,
     )
@@ -359,11 +359,11 @@ class DatabaseManager(object):
         # Create new connections in the case the engine is used from a forked
         # process.
         # See: https://docs.sqlalchemy.org/en/latest/core/pooling.html#using-connection-pools-with-multiprocessing
-        @event.listens_for(self.engine, "connect")
+        @event.listens_for(self.engine, 'connect')
         def connect(dbapi_connection, connection_record):
             connection_record.info['pid'] = os.getpid()
 
-        @event.listens_for(self.engine, "checkout")
+        @event.listens_for(self.engine, 'checkout')
         def checkout(dbapi_connection, connection_record, connection_proxy):
             pid = os.getpid()
             if connection_record.info['pid'] != pid:
@@ -435,8 +435,8 @@ class DatabaseManager(object):
             ),
             brand="AstroPlant Virtual",
             model="Temperature",
-            module_name = "astroplant_simulation.sensors",
-            class_name = "Temperature",
+            module_name = 'astroplant_simulation.sensors',
+            class_name = 'Temperature',
             quantity_types=[
                 qt_temperature,
             ],
@@ -471,8 +471,8 @@ class DatabaseManager(object):
             ),
             brand="AstroPlant Virtual",
             model="Barometer",
-            module_name = "astroplant_simulation.sensors",
-            class_name = "Temperature",
+            module_name = 'astroplant_simulation.sensors',
+            class_name = 'Temperature',
             quantity_types=[
                 qt_temperature,
                 qt_pressure,
