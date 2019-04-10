@@ -3,6 +3,8 @@ This program consumes messages from the Kafka measurement message queue,
 and inserts them into the PostgreSQL database.
 
 # Configuration
+Set environment variables to configure the program.
+
 | Variable | Description | Default |
 |-|-|-|
 | `DATABASE_HOST` | The hostname of the database server. | `database.ops` |
