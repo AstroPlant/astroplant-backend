@@ -46,7 +46,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True)
     username = Column(String(40), unique=True, nullable=False, index=True)
-    password = Column(String(250), nullable=False)
+    password = Column(String(255), nullable=False)
     email_address = Column(String(255), unique=True, nullable=False, index=True)
     use_gravatar = Column(Boolean, nullable=False, default=True)
     gravatar_alternative = Column(String(255), nullable=False)
@@ -60,7 +60,7 @@ class Kit(Base):
 
     id = Column(Integer, primary_key=True)
     serial = Column(String(20), unique=True, nullable=False, index=True)
-    name = Column(String(250), nullable=True)
+    name = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)
     latitude = Column(DECIMAL(11, 8), nullable=True)
     longitude = Column(DECIMAL(11, 8), nullable=True)
@@ -224,7 +224,7 @@ class Peripheral(Base):
         ),
         nullable=False,
     )
-    name = Column(String(250), nullable=False)
+    name = Column(String(255), nullable=False)
     active = Column(Boolean, nullable=False, default=True)
     added_datetime = Column(UTCDateTime)
     removed_datetime = Column(UTCDateTime)
