@@ -331,8 +331,12 @@ class Measurement(Base):
         nullable=False,
         index=True,
     )
-    physical_quantity = Column(String(50))
-    physical_unit = Column(String(50))
+    quantity_type_id = Column(
+        Integer,
+        ForeignKey(QuantityType.id, onupdate='CASCADE', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
     aggregate_type = Column(String(50))
     value = Column(Float)
     start_datetime = Column(UTCDateTime, index=True)
@@ -345,6 +349,9 @@ class Measurement(Base):
     kit = relationship(
         'Kit',
         back_populates='measurements',
+    )
+    quantity_type = relationship(
+        'QuantityType'
     )
 
 
