@@ -533,4 +533,22 @@ class DatabaseManager(object):
         )
         self.Session.add(pd_local_data_logger)
 
+        kit_develop = Kit(
+            serial='k_develop',
+            peripherals=[
+                Peripheral(
+                    name="Virtual temperature",
+                    peripheral_definition=pd_v_temperature,
+                ),
+                Peripheral(
+                    name="Virtual pressure",
+                    peripheral_definition=pd_v_pressure,
+                ),
+                Peripheral(
+                    name="Virtual barometer",
+                    peripheral_definition=pd_v_barometer,
+                ),
+            ],
+        )
+
         self.Session.commit()
