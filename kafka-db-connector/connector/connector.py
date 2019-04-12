@@ -19,8 +19,11 @@ def _run_connector(db, kafka_consumer):
 
     for record in kafka_consumer:
         payload = BytesIO(record.value)
-        msg = fastavro.schemaless_reader(payload, aggregate_schema)
-        print(msg)
+        try:
+            msg = fastavro.schemaless_reader(payload, aggregate_schema)
+        except:
+            # Could not decode message.
+            print(msg)
 
         try:
             kit = db.Session\
@@ -59,6 +62,9 @@ def _run_connector(db, kafka_consumer):
             # Malformed measurement. Perhaps using an old kit configuration?
             pass
 
+        except KeyError:
+            # Malformed measurement. Not all required keys were available.
+            pass
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
