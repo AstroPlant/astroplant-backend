@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship
 
 
-logger = logging.getLogger('astroplant.connector')
+logger = logging.getLogger('astroplant.connector.database')
 
 Base = declarative_base()
 

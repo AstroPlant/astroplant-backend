@@ -1,7 +1,11 @@
 import os
+import logging
 import argparse
 import datetime
 import database as d
+
+
+logger = logging.getLogger('astroplant.connector.connector')
 
 
 def utc_from_millis(t):
@@ -23,7 +27,7 @@ def _run_connector(db, kafka_consumer):
             msg = fastavro.schemaless_reader(payload, aggregate_schema)
         except:
             # Could not decode message.
-            print(msg)
+            logger.warn(f"Could not decode message: {payload}")
 
         try:
             kit = db.Session\
@@ -60,6 +64,10 @@ def _run_connector(db, kafka_consumer):
             print(peripheral)
         except NoResultFound:
             # Malformed measurement. Perhaps using an old kit configuration?
+            logger.warn((
+                "Message not compatible with database (wrong config?): "
+                f"{msg}"
+            ))
             pass
 
         except KeyError:
