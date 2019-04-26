@@ -14,3 +14,22 @@ Set environment variables to configure the program.
 | `MQTT_PASSWORD` | The password for MQTT authentication. | |
 | `KAFKA_HOST` | The hostname of one Kafka broker in the cluster. | `kafka.ops` |
 | `KAFKA_PORT` | The port of the Kafka broker. | `9092` |
+
+```
+export DOCKER_ID_USER="salekd"
+docker login https://index.docker.io/v1/
+
+docker build . -f Dockerfile -t astroplant-mqtt2kafka
+docker tag astroplant-mqtt2kafka $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.1
+docker push $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.1
+```
+
+```
+mkvirtualenv astroplant
+pip install -r requirements.txt
+
+workon astroplant
+
+source env.sh
+python astroplant_mqtt_api.py
+```
