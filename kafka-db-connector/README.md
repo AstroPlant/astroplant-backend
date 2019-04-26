@@ -18,7 +18,7 @@ To initialize the database table schemas and add AstroPlant development data, ex
 
 ```shell
 $ python connector/connector.py setup-schema
-$ python connector/connector.py insert-develop-datak_develop
+$ python connector/connector.py insert-develop-data
 ```
 
 # Running the connector
