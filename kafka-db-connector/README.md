@@ -12,3 +12,18 @@ Set environment variables to configure the program.
 | `DATABASE_USERNAME` | The username for database authentication. | `astroplant` |
 | `DATABASE_PASSWORD` | The password for database authentication. | `astroplant` |
 | `DATABASE_DATABASE` | The name of the AstroPlant database on the server. | `astroplant` |
+
+# Setting up a development enviroment
+To initialize the database table schemas and add AstroPlant development data, execute:
+
+```shell
+$ python connector/connector.py setup-schema
+$ python connector/connector.py insert-develop-datak_develop
+```
+
+# Running the connector
+To run the connector, execute:
+
+```shell
+$ python connector/connector.py run
+```
