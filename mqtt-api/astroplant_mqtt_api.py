@@ -120,7 +120,7 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.getLevelName(os.environ.get('LOG_LEVEL', 'DEBUG')))
+    ch.setLevel(logging.getLevelName(os.environ.get('LOG_LEVEL', 'INFO')))
 
     formatter = logging.Formatter(
         '%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s'
