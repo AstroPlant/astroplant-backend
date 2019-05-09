@@ -13,23 +13,37 @@ Set environment variables to configure the program.
 | `DATABASE_PASSWORD` | The password for database authentication. | `astroplant` |
 | `DATABASE_DATABASE` | The name of the AstroPlant database on the server. | `astroplant` |
 
+# Setting up a development enviroment
+
+Create a python environment dedicated to this project.
+
+```shell
+mkvirtualenv astroplant
+pip install -r requirements.txt
+workon astroplant
 ```
+
+To initialize the database table schemas and add AstroPlant development data, execute:
+
+```shell
+$ python connector/connector.py setup-schema
+$ python connector/connector.py insert-develop-data
+```
+
+# Running the connector
+To run the connector, execute:
+
+```shell
+$ python connector/connector.py run
+```
+
+# Docker
+
+```shell
 export DOCKER_ID_USER="salekd"
 docker login https://index.docker.io/v1/
 
 docker build . -f Dockerfile -t astroplant-kafka2db
 docker tag astroplant-kafka2db $DOCKER_ID_USER/astroplant-kafka2db:0.0.1
 docker push $DOCKER_ID_USER/astroplant-kafka2db:0.0.1
-```
-
-```
-mkvirtualenv astroplant
-pip install -r requirements.txt
-
-workon astroplant
-
-source env.sh
-python connector/connector.py setup-schema
-python connector/connector.py insert-develop-data
-python connector/connector.py run
 ```
