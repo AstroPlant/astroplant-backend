@@ -14,6 +14,15 @@ Set environment variables to configure the program.
 | `DATABASE_DATABASE` | The name of the AstroPlant database on the server. | `astroplant` |
 
 # Setting up a development enviroment
+
+Create a python environment dedicated to this project.
+
+```shell
+mkvirtualenv astroplant
+pip install -r requirements.txt
+workon astroplant
+```
+
 To initialize the database table schemas and add AstroPlant development data, execute:
 
 ```shell
@@ -26,4 +35,15 @@ To run the connector, execute:
 
 ```shell
 $ python connector/connector.py run
+```
+
+# Docker
+
+```shell
+export DOCKER_ID_USER="salekd"
+docker login https://index.docker.io/v1/
+
+docker build . -f Dockerfile -t astroplant-kafka2db
+docker tag astroplant-kafka2db $DOCKER_ID_USER/astroplant-kafka2db:0.0.1
+docker push $DOCKER_ID_USER/astroplant-kafka2db:0.0.1
 ```

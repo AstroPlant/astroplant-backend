@@ -1,10 +1,21 @@
 import os
 import paho.mqtt.client as mqtt
-from kafka import KafkaProducer
+from confluent_kafka.avro import AvroProducer
+from confluent_kafka import avro
 import fastavro
 import json
 from io import BytesIO
 import logging
+
+
+def delivery_report(err, msg):
+    """ Called once for each message produced to indicate delivery result.
+        Triggered by poll() or flush(). """
+    if err is not None:
+        print('Message delivery failed: {}'.format(err))
+    else:
+        print('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
+
 
 class Server(object):
     """
@@ -27,8 +38,9 @@ class Server(object):
 
         self._mqtt_client.reconnect_delay_set(min_delay=1, max_delay=128)
 
-        with open('./schema/aggregate.avsc', 'r') as f:
-            self._aggregate_schema = fastavro.parse_schema(json.load(f))
+        self._aggregate_schema = avro.load('./schema/aggregate.avsc')
+        #with open('./schema/aggregate.avsc', 'r') as f:
+        #    self._aggregate_schema = fastavro.parse_schema(json.load(f))
 
         with open('./schema/stream.avsc', 'r') as f:
             self._stream_schema = fastavro.parse_schema(json.load(f))
@@ -66,6 +78,8 @@ class Server(object):
         self.connected = False
 
     def _on_message(self, client, user_data, msg):
+        logger.debug(f"Message received: {msg.payload}")
+
         topic = msg.topic.split("/")
         payload = BytesIO(msg.payload)
 
@@ -78,22 +92,28 @@ class Server(object):
             return
 
         serial = topic[1]
-        message = fastavro.schemaless_reader(payload, self._aggregate_schema)
+        #message = fastavro.schemaless_reader(payload, self._aggregate_schema)
+        message = json.loads(msg.payload.decode())
         message['kit_serial'] = serial
 
-        logger.debug(f"Message received and sending to Kafka: {message}")
+        #msg = BytesIO()
+        #fastavro.schemaless_writer(
+        #    msg,
+        #    self._aggregate_schema,
+        #    message
+        #)
 
-        msg = BytesIO()
-        fastavro.schemaless_writer(
-            msg,
-            self._aggregate_schema,
-            message
+        self._kafka_producer.poll(0)
+        logger.debug(f"Sending message {message} with value schema {self._aggregate_schema} to Kafka.")
+        self._kafka_producer.produce(
+            topic="aggregate-schema",
+            #value=msg.getvalue(),
+            value=message,
+            value_schema=self._aggregate_schema,
+            callback=delivery_report
         )
+        self._kafka_producer.flush()
 
-        self._kafka_producer.send(
-            topic="measurement_aggregate",
-            value=msg.getvalue(),
-        )
 
 if __name__ == "__main__":
     logger = logging.getLogger("AstroPlant_MQTT_API")
@@ -110,13 +130,22 @@ if __name__ == "__main__":
     logger.addHandler(ch)
 
     logger.debug('Creating Kafka producer.')
-    host = os.environ.get('KAFKA_HOST', 'kafka.ops')
-    port = os.environ.get('KAFKA_PORT', '9092')
-    kafka_producer = KafkaProducer(
-        bootstrap_servers=f"{host}:{port}",
-        client_id="astroplant-mqtt-kafka-connector",
-        acks=1 # Topic leader must acknowledge our messages.
-    )
+    kafka_host = os.environ.get('KAFKA_HOST', 'kafka.ops')
+    kafka_port = os.environ.get('KAFKA_PORT', '9092')
+    kafka_username = os.environ.get('KAFKA_USERNAME')
+    kafka_password = os.environ.get('KAFKA_PASSWORD')
+    schema_registry_url = os.environ.get('SCHEMA_REGISTRY_URL')
+
+    conf = {
+        'bootstrap.servers': f'{kafka_host}:{kafka_port}',
+        'schema.registry.url': schema_registry_url,
+        #'debug': 'security',
+        'security.protocol': 'SASL_PLAINTEXT',
+        'sasl.mechanisms': 'PLAIN',
+        'sasl.username': kafka_username,
+        'sasl.password': kafka_password
+    }
+    kafka_producer = AvroProducer(conf)
 
     logger.debug('Creating server.')
     server = Server(
