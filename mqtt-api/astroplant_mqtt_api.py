@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+"""
+AstroPlant MQTT API.
+
+Connects MQTT and Kafka.
+"""
+
 import os
 import paho.mqtt.client as mqtt
 from kafka import KafkaProducer
@@ -11,7 +17,7 @@ import logging
 
 class Server(object):
     """
-    AstroPlant MQTT API.
+    The MQTT API server.
     """
 
     def __init__(self, host, port, username, password, kafka_producer,
