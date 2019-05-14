@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 import paho.mqtt.client as mqtt
 from confluent_kafka.avro import AvroProducer
