@@ -135,7 +135,9 @@ if __name__ == "__main__":
     kafka_producer = KafkaProducer(
         bootstrap_servers=f"{kafka_host}:{kafka_port}",
         client_id="astroplant-mqtt-kafka-connector",
-        acks=1 # Topic leader must acknowledge our messages.
+        acks=1, # Topic leader must acknowledge our messages.
+        sasl_plain_username=kafka_username,
+        sasl_plain_password=kafka_password
     )
 
     logger.debug('Creating server.')
