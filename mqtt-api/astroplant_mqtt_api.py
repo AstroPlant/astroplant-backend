@@ -146,6 +146,7 @@ if __name__ == "__main__":
     kafka_username = os.environ.get('KAFKA_USERNAME')
     kafka_password = os.environ.get('KAFKA_PASSWORD')
 
+    logger.info(f"Kafka bootstrapping to {kafka_host}:{kafka_port}.")
     kafka_producer = KafkaProducer(
         bootstrap_servers=f"{kafka_host}:{kafka_port}",
         client_id="astroplant-mqtt-kafka-connector",

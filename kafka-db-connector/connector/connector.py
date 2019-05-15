@@ -128,6 +128,8 @@ if __name__ == '__main__':
         kafka_password = os.environ.get('KAFKA_PASSWORD')
         kafka_consumer_group = os.environ.get('KAFKA_CONSUMER_GROUP')
 
+        logger.info(f"Kafka bootstrapping to {kafka_host}:{kafka_port}.")
+        logger.info(f"Kafka consumer group: {kafka_consumer_group}.")
         kafka_consumer = KafkaConsumer(
             'aggregate-schema',
             bootstrap_servers=[f'{kafka_host}:{kafka_port}'],
