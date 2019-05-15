@@ -17,6 +17,7 @@ Set environment variables to configure the program.
 | `KAFKA_USERNAME` | The username for plain sasl authentication. | |
 | `KAFKA_PASSWORD` | The password for plain sasl authentication. | |
 | `KAFKA_CONSUMER_GROUP` | The name of the consumer group for dynamic partition assignment. | |
+| `LOG_LEVEL` | The minimum level of logs shown. One of `DEBUG`, `INFO`, `WARNING`, `ERROR`. | `INFO` |
 
 # Setting up a development enviroment
 

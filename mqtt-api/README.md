@@ -16,6 +16,7 @@ Set environment variables to configure the program.
 | `KAFKA_PORT` | The port of the Kafka broker. | `9092` |
 | `KAFKA_USERNAME` | The username for plain sasl authentication. | |
 | `KAFKA_PASSWORD` | The password for plain sasl authentication. | |
+| `LOG_LEVEL` | The minimum level of logs shown. One of `DEBUG`, `INFO`, `WARNING`, `ERROR`. | `INFO` |
 
 ```shell
 $ export DOCKER_ID_USER="salekd"
