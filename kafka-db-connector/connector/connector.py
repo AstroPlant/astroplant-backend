@@ -13,9 +13,6 @@ import database as d
 import sys
 
 
-logger = logging.getLogger('astroplant.connector.connector')
-
-
 def utc_from_millis(t):
     return datetime.datetime.fromtimestamp(t / 1000, datetime.timezone.utc)
 
@@ -33,6 +30,7 @@ def _run_connector(db, kafka_consumer):
         payload = BytesIO(record.value)
         try:
             msg = fastavro.schemaless_reader(payload, aggregate_schema)
+            logger.debug(f"Received message from Kafka: {msg}")
         except:
             # Could not decode message.
             logger.warn(f"Could not decode message: {payload}")
@@ -84,6 +82,19 @@ def _run_connector(db, kafka_consumer):
             pass
 
 if __name__ == '__main__':
+    logger = logging.getLogger("astroplant.connector")
+    logger.setLevel(logging.DEBUG)
+
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.getLevelName(os.environ.get('LOG_LEVEL', 'INFO')))
+
+    formatter = logging.Formatter(
+        '%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'command',
@@ -110,6 +121,7 @@ if __name__ == '__main__':
     elif args.command == 'run':
         from kafka import KafkaConsumer
 
+        logger.debug("Creating Kafka consumer.")
         kafka_host = os.environ.get('KAFKA_HOST', 'kafka.ops')
         kafka_port = int(os.environ.get('KAFKA_PORT', '9092'))
         kafka_username = os.environ.get('KAFKA_USERNAME')
@@ -125,4 +137,5 @@ if __name__ == '__main__':
             sasl_plain_password=kafka_password
         )
 
+        logger.info("Running connector.")
         _run_connector(db, kafka_consumer)
