@@ -17,21 +17,21 @@ Set environment variables to configure the program.
 | `KAFKA_USERNAME` | The username for plain sasl authentication. | |
 | `KAFKA_PASSWORD` | The password for plain sasl authentication. | |
 
+```shell
+$ export DOCKER_ID_USER="salekd"
+$ docker login https://index.docker.io/v1/
+
+$ docker build . -f Dockerfile -t astroplant-mqtt2kafka
+$ docker tag astroplant-mqtt2kafka $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.1
+$ docker push $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.1
 ```
-export DOCKER_ID_USER="salekd"
-docker login https://index.docker.io/v1/
 
-docker build . -f Dockerfile -t astroplant-mqtt2kafka
-docker tag astroplant-mqtt2kafka $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.1
-docker push $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.1
-```
+```shell
+$ mkvirtualenv astroplant
+$ pip install -r requirements.txt
 
-```
-mkvirtualenv astroplant
-pip install -r requirements.txt
+$ workon astroplant
 
-workon astroplant
-
-source env.sh
-python astroplant_mqtt_api.py
+$ source env.sh
+$ python astroplant_mqtt_api.py
 ```
