@@ -15,6 +15,11 @@ from io import BytesIO
 import logging
 
 
+class UnrecognizedTopicError(ValueError):
+    def __init__(self, topic):
+        self.topic = topic
+
+
 class Server(object):
     """
     The MQTT API server.
@@ -32,7 +37,7 @@ class Server(object):
         self._mqtt_client = mqtt.Client()
         self._mqtt_client.on_connect = self._on_connect
         self._mqtt_client.on_disconnect = self._on_disconnect
-        self._mqtt_client.on_message = self._on_message
+        self._mqtt_client.on_message = self._on_message_wrap
 
         self._mqtt_client.reconnect_delay_set(min_delay=1, max_delay=128)
 
@@ -80,9 +85,15 @@ class Server(object):
         logger.info("MQTT disconnected.")
         self.connected = False
 
-    def _on_message(self, client, user_data, msg):
-        logger.debug(f"Message received: {msg.payload}")
+    def _on_message_wrap(self, *args, **kwargs):
+        try:
+            self._on_message(*args, **kwargs)
+        except UnrecognizedTopicError as e:
+            logger.warn(f"Message received with unrecognized MQTT topic: {e.topic}")
+        except:
+            logger.exception(f"Unexpected exception caught in MQTT message handler.")
 
+    def _on_message(self, client, user_data, msg):
         topic = msg.topic.split("/")
         payload = BytesIO(msg.payload)
 
@@ -92,8 +103,9 @@ class Server(object):
                 or topic[2] != "measurement"
                 or topic[3] != "aggregate"
         ):
-            return
+            raise UnrecognizedTopicError(msg.topic)
 
+        logger.debug(f"Message received on topic '{topic}': {msg.payload}")
         serial = topic[1]
 
         message['kit_serial'] = serial
