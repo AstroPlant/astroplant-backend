@@ -20,6 +20,11 @@ class UnrecognizedTopicError(ValueError):
         self.topic = topic
 
 
+class AvroDecoderError(ValueError):
+    def __init__(self, kit_serial):
+        self.kit_serial = kit_serial
+
+
 class Server(object):
     """
     The MQTT API server.
@@ -31,6 +36,7 @@ class Server(object):
         self._port = port
         self._keepalive = keepalive
         self._kafka_producer = kafka_producer
+        self._message_id = 0
 
         self.connected = False
 
@@ -86,16 +92,30 @@ class Server(object):
         self.connected = False
 
     def _on_message_wrap(self, *args, **kwargs):
+        self._message_id += 1
         try:
-            self._on_message(*args, **kwargs)
+            self._on_message(*args, message_id=self._message_id, **kwargs)
         except (KeyboardInterrupt, SystemExit):
             raise
         except UnrecognizedTopicError as e:
-            logger.warn(f"Message received with unrecognized MQTT topic: {e.topic}")
+            logger.warn(
+                f"Message {self._message_id}: "
+                f"unrecognized MQTT topic: {e.topic}"
+            )
+        except AvroDecoderError as e:
+            logger.warn(
+                f"Message {self._message_id}: "
+                f"malformed avro message, from: {e.kit_serial}"
+            )
         except:
-            logger.exception(f"Unexpected exception caught in MQTT message handler.")
+            logger.exception(
+                f"Message {self._message_id}: "
+                "unexpected exception caught in message handler."
+            )
 
-    def _on_message(self, client, user_data, msg):
+    def _on_message(self, client, user_data, msg, message_id):
+        logger.debug(f"Message {message_id}: '{msg.topic}': {msg.payload}")
+
         topic = msg.topic.split("/")
         payload = BytesIO(msg.payload)
 
@@ -107,12 +127,15 @@ class Server(object):
         ):
             raise UnrecognizedTopicError(msg.topic)
 
-        logger.debug(f"Message received on topic '{topic}': {msg.payload}")
         kit_serial = topic[1]
 
-        message = fastavro.schemaless_reader(payload, self._aggregate_schema)
+        try:
+            message = fastavro.schemaless_reader(payload, self._aggregate_schema)
+        except:
+            raise AvroDecoderError(kit_serial)
+
         message['kit_serial'] = kit_serial
-        logger.debug(f"Message received and sending to Kafka: {message}")
+        logger.debug(f"Message {message_id}: decoded {message}")
 
         msg = BytesIO()
         fastavro.schemaless_writer(
@@ -121,9 +144,21 @@ class Server(object):
             message
         )
 
-        self._kafka_producer.send(
+        result = self._kafka_producer.send(
             topic="aggregate-schema",
             value=msg.getvalue(),
+        )
+        result.add_callback(
+            lambda res: logger.debug(
+                f"Message {message_id}: successfully sent to Kafka. "
+                f"Partition: {res.partition}. "
+                f"Offset: {res.offset}."
+            )
+        )
+        result.add_errback(
+            lambda err: logger.warn(
+                f"Message {message_id} could not be sent to Kafka: {err}"
+            )
         )
 
 
