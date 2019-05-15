@@ -1,29 +1,27 @@
+#!/usr/bin/env python3
+
+"""
+AstroPlant MQTT API.
+
+Connects MQTT and Kafka.
+"""
+
 import os
 import paho.mqtt.client as mqtt
-from confluent_kafka.avro import AvroProducer
-from confluent_kafka import avro
+from kafka import KafkaProducer
 import fastavro
 import json
 from io import BytesIO
 import logging
 
 
-def delivery_report(err, msg):
-    """ Called once for each message produced to indicate delivery result.
-        Triggered by poll() or flush(). """
-    if err is not None:
-        print('Message delivery failed: {}'.format(err))
-    else:
-        print('Message delivered to {} [{}]'.format(msg.topic(), msg.partition()))
-
-
 class Server(object):
     """
-    AstroPlant MQTT API.
+    The MQTT API server.
     """
 
     def __init__(self, host, port, username, password, kafka_producer,
-                 keepalive=1):
+                 keepalive=60):
         self._host = host
         self._port = port
         self._keepalive = keepalive
@@ -38,9 +36,8 @@ class Server(object):
 
         self._mqtt_client.reconnect_delay_set(min_delay=1, max_delay=128)
 
-        self._aggregate_schema = avro.load('./schema/aggregate.avsc')
-        #with open('./schema/aggregate.avsc', 'r') as f:
-        #    self._aggregate_schema = fastavro.parse_schema(json.load(f))
+        with open('./schema/aggregate.avsc', 'r') as f:
+            self._aggregate_schema = fastavro.parse_schema(json.load(f))
 
         with open('./schema/stream.avsc', 'r') as f:
             self._stream_schema = fastavro.parse_schema(json.load(f))
@@ -50,16 +47,20 @@ class Server(object):
             password=password
         )
 
+
     def start(self):
         """
         Start the client. Blocking.
         """
+        logger.info("Server starting.")
+        logger.debug(f"MQTT connecting to {self._host}:{self._port}.")
         self._mqtt_client.connect(
             host=self._host,
             port=self._port,
             keepalive=self._keepalive,
         )
         self._mqtt_client.loop_forever()
+        logger.info("MQTT stopped.")
 
     def stop(self):
         """
@@ -68,6 +69,7 @@ class Server(object):
         self._mqtt_client.loop_stop()
 
     def _on_connect(self, client, user_data, flags, rc):
+        logger.info("MQTT connected.")
         self.connected = True
         self._mqtt_client.subscribe(
             "kit/+/measurement/aggregate",
@@ -75,6 +77,7 @@ class Server(object):
         )
 
     def _on_disconnect(self, client, user_data, rc):
+        logger.info("MQTT disconnected.")
         self.connected = False
 
     def _on_message(self, client, user_data, msg):
@@ -92,31 +95,25 @@ class Server(object):
             return
 
         serial = topic[1]
-        #message = fastavro.schemaless_reader(payload, self._aggregate_schema)
-        message = json.loads(msg.payload.decode())
+
         message['kit_serial'] = serial
+        logger.debug(f"Message received and sending to Kafka: {message}")
 
-        #msg = BytesIO()
-        #fastavro.schemaless_writer(
-        #    msg,
-        #    self._aggregate_schema,
-        #    message
-        #)
-
-        self._kafka_producer.poll(0)
-        logger.debug(f"Sending message {message} with value schema {self._aggregate_schema} to Kafka.")
-        self._kafka_producer.produce(
-            topic="aggregate-schema",
-            #value=msg.getvalue(),
-            value=message,
-            value_schema=self._aggregate_schema,
-            callback=delivery_report
+        msg = BytesIO()
+        fastavro.schemaless_writer(
+            msg,
+            self._aggregate_schema,
+            message
         )
-        self._kafka_producer.flush()
+
+        self._kafka_producer.send(
+            topic="measurement_aggregate",
+            value=msg.getvalue(),
+        )
 
 
 if __name__ == "__main__":
-    logger = logging.getLogger("AstroPlant_MQTT_API")
+    logger = logging.getLogger("astroplant.mqtt_api")
     logger.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler()
@@ -129,23 +126,19 @@ if __name__ == "__main__":
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
-    logger.debug('Creating Kafka producer.')
+    logger.debug("Creating Kafka producer.")
     kafka_host = os.environ.get('KAFKA_HOST', 'kafka.ops')
     kafka_port = os.environ.get('KAFKA_PORT', '9092')
     kafka_username = os.environ.get('KAFKA_USERNAME')
     kafka_password = os.environ.get('KAFKA_PASSWORD')
-    schema_registry_url = os.environ.get('SCHEMA_REGISTRY_URL')
 
-    conf = {
-        'bootstrap.servers': f'{kafka_host}:{kafka_port}',
-        'schema.registry.url': schema_registry_url,
-        #'debug': 'security',
-        'security.protocol': 'SASL_PLAINTEXT',
-        'sasl.mechanisms': 'PLAIN',
-        'sasl.username': kafka_username,
-        'sasl.password': kafka_password
-    }
-    kafka_producer = AvroProducer(conf)
+    kafka_producer = KafkaProducer(
+        bootstrap_servers=f"{kafka_host}:{kafka_port}",
+        client_id="astroplant-mqtt-kafka-connector",
+        acks=1, # Topic leader must acknowledge our messages.
+        sasl_plain_username=kafka_username,
+        sasl_plain_password=kafka_password
+    )
 
     logger.debug('Creating server.')
     server = Server(
@@ -156,5 +149,4 @@ if __name__ == "__main__":
         kafka_producer=kafka_producer
     )
 
-    logger.info('Starting.')
     server.start()

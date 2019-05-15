@@ -12,6 +12,11 @@ Set environment variables to configure the program.
 | `DATABASE_USERNAME` | The username for database authentication. | `astroplant` |
 | `DATABASE_PASSWORD` | The password for database authentication. | `astroplant` |
 | `DATABASE_DATABASE` | The name of the AstroPlant database on the server. | `astroplant` |
+| `KAFKA_HOST` | The hostname of one Kafka broker in the cluster. | `kafka.ops` |
+| `KAFKA_PORT` | The port of the Kafka broker. | `9092` |
+| `KAFKA_USERNAME` | The username for plain sasl authentication. | |
+| `KAFKA_PASSWORD` | The password for plain sasl authentication. | |
+| `KAFKA_CONSUMER_GROUP` | The name of the consumer group for dynamic partition assignment. | |
 
 # Setting up a development enviroment
 

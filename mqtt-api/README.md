@@ -14,6 +14,8 @@ Set environment variables to configure the program.
 | `MQTT_PASSWORD` | The password for MQTT authentication. | |
 | `KAFKA_HOST` | The hostname of one Kafka broker in the cluster. | `kafka.ops` |
 | `KAFKA_PORT` | The port of the Kafka broker. | `9092` |
+| `KAFKA_USERNAME` | The username for plain sasl authentication. | |
+| `KAFKA_PASSWORD` | The password for plain sasl authentication. | |
 
 ```
 export DOCKER_ID_USER="salekd"
