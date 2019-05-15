@@ -72,10 +72,9 @@ def _run_connector(db, kafka_consumer):
                 start_datetime=utc_from_millis(msg['start_datetime']),
                 end_datetime=utc_from_millis(msg['end_datetime']),
             )
+            logger.debug(f"Measurement modeled as: {measurement.__dict__}")
             db.Session.add(measurement)
             db.Session.commit()
-            print(kit)
-            print(peripheral)
         except NoResultFound:
             # Malformed measurement. Perhaps using an old kit configuration?
             logger.warn((
