@@ -108,9 +108,10 @@ class Server(object):
             raise UnrecognizedTopicError(msg.topic)
 
         logger.debug(f"Message received on topic '{topic}': {msg.payload}")
-        serial = topic[1]
+        kit_serial = topic[1]
 
-        message['kit_serial'] = serial
+        message = fastavro.schemaless_reader(payload, self._aggregate_schema)
+        message['kit_serial'] = kit_serial
         logger.debug(f"Message received and sending to Kafka: {message}")
 
         msg = BytesIO()
