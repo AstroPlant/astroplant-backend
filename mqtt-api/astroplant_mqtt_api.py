@@ -88,6 +88,8 @@ class Server(object):
     def _on_message_wrap(self, *args, **kwargs):
         try:
             self._on_message(*args, **kwargs)
+        except (KeyboardInterrupt, SystemExit):
+            raise
         except UnrecognizedTopicError as e:
             logger.warn(f"Message received with unrecognized MQTT topic: {e.topic}")
         except:
