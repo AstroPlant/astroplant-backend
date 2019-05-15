@@ -33,7 +33,8 @@ def _run_connector(db, kafka_consumer):
             logger.debug(f"Received message from Kafka: {msg}")
         except:
             # Could not decode message.
-            logger.warn(f"Could not decode message: {payload}")
+            logger.warning(f"Could not decode message: {payload}")
+            continue
 
         try:
             kit = (
@@ -78,14 +79,18 @@ def _run_connector(db, kafka_consumer):
             logger.debug(f"Measurement committed to database.")
         except NoResultFound:
             # Malformed measurement. Perhaps using an old kit configuration?
-            logger.warn((
+            logger.warning(
                 "Message not compatible with database (wrong config?): "
                 f"{msg}"
-            ))
-            pass
+            )
         except KeyError:
             # Malformed measurement. Not all required keys were available.
-            pass
+            # This indicates a serious logic error, as the message corresponds
+            # to the Avro schema. As such, this case should never happen.
+            logger.exception(
+                "Unexpected invalid data in well-formed message: "
+                f"{payload}"
+            )
         except:
             logger.exception(
                 f"Message {msg}: "

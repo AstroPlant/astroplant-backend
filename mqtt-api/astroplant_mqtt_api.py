@@ -98,12 +98,12 @@ class Server(object):
         except (KeyboardInterrupt, SystemExit):
             raise
         except UnrecognizedTopicError as e:
-            logger.warn(
+            logger.warning(
                 f"Message {self._message_id}: "
                 f"unrecognized MQTT topic: {e.topic}"
             )
         except AvroDecoderError as e:
-            logger.warn(
+            logger.warning(
                 f"Message {self._message_id}: "
                 f"malformed avro message, from: {e.kit_serial}"
             )
@@ -156,7 +156,7 @@ class Server(object):
             )
         )
         result.add_errback(
-            lambda err: logger.warn(
+            lambda err: logger.warning(
                 f"Message {message_id} could not be sent to Kafka: {err}"
             )
         )
