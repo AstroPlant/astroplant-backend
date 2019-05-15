@@ -43,11 +43,10 @@ def _run_connector(db, kafka_consumer):
             peripheral = db.Session\
                            .query(d.Peripheral)\
                            .filter(
-                               d.QuantityType.physical_quantity==value['physical_quantity'],
-                               d.QuantityType.physical_unit==value['physical_unit']
+                               d.Peripheral.name==msg['peripheral'],
+                               d.Peripheral.kit==kit
                            )\
                            .one()
-
             qt = db.Session\
                    .query(d.QuantityType)\
                    .filter(
