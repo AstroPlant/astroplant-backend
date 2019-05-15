@@ -107,7 +107,7 @@ class Server(object):
         )
 
         self._kafka_producer.send(
-            topic="measurement_aggregate",
+            topic="aggregate-schema",
             value=msg.getvalue(),
         )
 

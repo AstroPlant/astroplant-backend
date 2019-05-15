@@ -129,7 +129,7 @@ if __name__ == '__main__':
         kafka_consumer_group = os.environ.get('KAFKA_CONSUMER_GROUP')
 
         kafka_consumer = KafkaConsumer(
-            'measurement_aggregate',
+            'aggregate-schema',
             group_id=kafka_consumer_group,
             bootstrap_servers=[f'{kafka_host}:{kafka_port}'],
             sasl_plain_username=kafka_username,
