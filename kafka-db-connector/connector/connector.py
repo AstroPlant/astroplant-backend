@@ -75,6 +75,7 @@ def _run_connector(db, kafka_consumer):
             logger.debug(f"Measurement modeled as: {measurement.__dict__}")
             db.Session.add(measurement)
             db.Session.commit()
+            logger.debug(f"Measurement committed to database.")
         except NoResultFound:
             # Malformed measurement. Perhaps using an old kit configuration?
             logger.warn((
@@ -82,10 +83,15 @@ def _run_connector(db, kafka_consumer):
                 f"{msg}"
             ))
             pass
-
         except KeyError:
             # Malformed measurement. Not all required keys were available.
             pass
+        except:
+            logger.exception(
+                f"Message {msg}: "
+                "unexpected exception caught in message handler."
+            )
+
 
 if __name__ == '__main__':
     logger = logging.getLogger("astroplant.kafka_db_connector")
