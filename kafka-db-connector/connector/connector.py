@@ -36,24 +36,32 @@ def _run_connector(db, kafka_consumer):
             logger.warn(f"Could not decode message: {payload}")
 
         try:
-            kit = db.Session\
-                    .query(d.Kit)\
-                    .filter(d.Kit.serial==msg['kit_serial'])\
-                    .one()
-            peripheral = db.Session\
-                           .query(d.Peripheral)\
-                           .filter(
-                               d.Peripheral.name==msg['peripheral'],
-                               d.Peripheral.kit==kit
-                           )\
-                           .one()
-            qt = db.Session\
-                   .query(d.QuantityType)\
-                   .filter(
-                       d.QuantityType.physical_quantity==msg['physical_quantity'],
-                       d.QuantityType.physical_unit==msg['physical_unit']
-                   )\
-                   .one()
+            kit = (
+                db.Session
+                .query(d.Kit)
+                .filter(d.Kit.serial==msg['kit_serial'])
+                .one()
+            )
+
+            peripheral = (
+                db.Session
+                .query(d.Peripheral)
+                .filter(
+                    d.Peripheral.name==msg['peripheral'],
+                    d.Peripheral.kit==kit
+                )
+                .one()
+            )
+
+            qt = (
+                db.Session
+                .query(d.QuantityType)
+                .filter(
+                    d.QuantityType.physical_quantity==msg['physical_quantity'],
+                    d.QuantityType.physical_unit==msg['physical_unit']
+                )
+                .one()
+            )
 
             measurement = d.Measurement(
                 kit=kit,
