@@ -127,10 +127,9 @@ if __name__ == '__main__':
         kafka_username = os.environ.get('KAFKA_USERNAME')
         kafka_password = os.environ.get('KAFKA_PASSWORD')
         kafka_consumer_group = os.environ.get('KAFKA_CONSUMER_GROUP')
-        kafka_topic = os.environ.get('KAFKA_TOPIC', 'measurement_aggregate')
 
         kafka_consumer = KafkaConsumer(
-            kafka_topic,
+            'measurement_aggregate',
             group_id=kafka_consumer_group,
             bootstrap_servers=[f'{kafka_host}:{kafka_port}'],
             sasl_plain_username=kafka_username,
