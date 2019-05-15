@@ -130,8 +130,10 @@ if __name__ == '__main__':
 
         kafka_consumer = KafkaConsumer(
             'aggregate-schema',
-            group_id=kafka_consumer_group,
             bootstrap_servers=[f'{kafka_host}:{kafka_port}'],
+            group_id=kafka_consumer_group,
+            security_protocol="SASL_PLAINTEXT",
+            sasl_mechanism="PLAIN",
             sasl_plain_username=kafka_username,
             sasl_plain_password=kafka_password
         )
