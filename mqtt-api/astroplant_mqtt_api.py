@@ -113,7 +113,7 @@ class Server(object):
 
 
 if __name__ == "__main__":
-    logger = logging.getLogger("AstroPlant_MQTT_API")
+    logger = logging.getLogger("astroplant.mqtt_api")
     logger.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler()

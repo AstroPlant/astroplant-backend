@@ -82,7 +82,7 @@ def _run_connector(db, kafka_consumer):
             pass
 
 if __name__ == '__main__':
-    logger = logging.getLogger("astroplant.connector")
+    logger = logging.getLogger("astroplant.kafka_db_connector")
     logger.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler()
