@@ -82,10 +82,12 @@ class Server(object):
     def _on_connect(self, client, user_data, flags, rc):
         logger.info("MQTT connected.")
         self.connected = True
-        self._mqtt_client.subscribe(
-            "kit/+/measurement/aggregate",
-            qos=2 # Ensure exactly once delivery from the broker.
-        )
+        # Subscribe to multiple topics.
+        # Use QoS=2 to ensure exactly once delivery from the broker.
+        self._mqtt_client.subscribe([
+            ("kit/+/measurement/realtime", 2),
+            ("kit/+/measurement/aggregate", 2)
+        ])
 
     def _on_disconnect(self, client, user_data, rc):
         logger.info("MQTT disconnected.")
@@ -123,14 +125,19 @@ class Server(object):
                 len(topic) != 4
                 or topic[0] != "kit"
                 or topic[2] != "measurement"
-                or topic[3] != "aggregate"
+                or not topic[3] in ["realtime", "aggregate"]
         ):
             raise UnrecognizedTopicError(msg.topic)
 
         kit_serial = topic[1]
+        message_type = topic[3]
+        pipeline = {
+                "realtime": {"avro_schema": self._stream_schema, "kafka_topic": "realtime-schema"},
+                "aggregate": {"avro_schema": self._aggregate_schema, "kafka_topic": "aggregate-schema"}
+        }
 
         try:
-            message = fastavro.schemaless_reader(payload, self._aggregate_schema)
+            message = fastavro.schemaless_reader(payload, pipeline[message_type]["avro_schema"])
         except:
             raise AvroDecoderError(kit_serial)
 
@@ -140,12 +147,12 @@ class Server(object):
         msg = BytesIO()
         fastavro.schemaless_writer(
             msg,
-            self._aggregate_schema,
+            pipeline[message_type]["avro_schema"],
             message
         )
 
         result = self._kafka_producer.send(
-            topic="aggregate-schema",
+            topic=pipeline[message_type]["kafka_topic"],
             value=msg.getvalue(),
         )
         result.add_callback(
