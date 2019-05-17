@@ -152,8 +152,8 @@ if __name__ == '__main__':
             bootstrap_servers=[f'{kafka_host}:{kafka_port}'],
             group_id=kafka_consumer_group,
             auto_offset_reset='earliest',  # Consume earliest available message.
-            security_protocol="SASL_PLAINTEXT",
-            sasl_mechanism="PLAIN",
+            security_protocol='SASL_PLAINTEXT',
+            sasl_mechanism='PLAIN',
             sasl_plain_username=kafka_username,
             sasl_plain_password=kafka_password
         )
