@@ -200,8 +200,8 @@ if __name__ == "__main__":
         bootstrap_servers=f"{kafka_host}:{kafka_port}",
         client_id="astroplant-mqtt-kafka-connector",
         acks=1, # Topic leader must acknowledge our messages.
-        security_protocol="SASL_PLAINTEXT",
-        sasl_mechanism="PLAIN",
+        security_protocol="SASL_PLAINTEXT" if kafka_username else "PLAINTEXT",
+        sasl_mechanism="PLAIN" if kafka_username else None,
         sasl_plain_username=kafka_username,
         sasl_plain_password=kafka_password
     )
