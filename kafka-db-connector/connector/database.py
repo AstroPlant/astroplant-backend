@@ -312,11 +312,11 @@ Peripheral.configurations = relationship(
 )
 
 
-class Measurement(Base):
+class RawMeasurement(Base):
     """
-    Model to hold peripheral device measurements.
+    Model to hold (real-time) raw peripheral device measurements.
     """
-    __tablename__ = 'measurements'
+    __tablename__ = 'raw_measurements'
 
     id = Column(Integer, primary_key=True)
     peripheral_id = Column(
@@ -337,32 +337,83 @@ class Measurement(Base):
         nullable=False,
         index=True,
     )
-    aggregate_type = Column(String(50))
     value = Column(Float)
-    start_datetime = Column(UTCDateTime, index=True)
-    end_datetime = Column(UTCDateTime, index=True)
+    datetime = Column(UTCDateTime, index=True)
 
     peripheral = relationship(
         'Peripheral',
-        back_populates='measurements',
+        back_populates='raw_measurements',
     )
     kit = relationship(
         'Kit',
-        back_populates='measurements',
+        back_populates='raw_measurements',
     )
     quantity_type = relationship(
         'QuantityType'
     )
 
 
-Peripheral.measurements = relationship(
-    'Measurement',
-    order_by=Measurement.end_datetime,
+class AggregateMeasurement(Base):
+    """
+    Model to hold aggregate peripheral device measurements.
+    """
+    __tablename__ = 'aggregate_measurements'
+
+    id = Column(Integer, primary_key=True)
+    peripheral_id = Column(
+        Integer,
+        ForeignKey(Peripheral.id, onupdate='CASCADE', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
+    kit_id = Column(
+        Integer,
+        ForeignKey(Kit.id, onupdate='CASCADE', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
+    quantity_type_id = Column(
+        Integer,
+        ForeignKey(QuantityType.id, onupdate='CASCADE', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
+    aggregate_type = Column(String(50), nullable=False)
+    value = Column(Float)
+    start_datetime = Column(UTCDateTime, index=True)
+    end_datetime = Column(UTCDateTime, index=True)
+
+    peripheral = relationship(
+        'Peripheral',
+        back_populates='aggregate_measurements',
+    )
+    kit = relationship(
+        'Kit',
+        back_populates='aggregate_measurements',
+    )
+    quantity_type = relationship(
+        'QuantityType'
+    )
+
+
+Peripheral.raw_measurements = relationship(
+    'RawMeasurement',
+    order_by=RawMeasurement.datetime,
     back_populates='peripheral',
 )
-Kit.measurements = relationship(
-    'Measurement',
-    order_by=Measurement.end_datetime,
+Peripheral.aggregate_measurements = relationship(
+    'AggregateMeasurement',
+    order_by=AggregateMeasurement.end_datetime,
+    back_populates='peripheral',
+)
+Kit.raw_measurements = relationship(
+    'RawMeasurement',
+    order_by=RawMeasurement.datetime,
+    back_populates='kit',
+)
+Kit.aggregate_measurements = relationship(
+    'AggregateMeasurement',
+    order_by=AggregateMeasurement.end_datetime,
     back_populates='kit',
 )
 

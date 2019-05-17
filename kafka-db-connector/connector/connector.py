@@ -7,7 +7,7 @@ and inserts them into the PostgreSQL database.
 
 import os
 import logging
-import argparse
+import click
 import datetime
 import database as d
 import sys
@@ -17,19 +17,29 @@ def utc_from_millis(t):
     return datetime.datetime.fromtimestamp(t / 1000, datetime.timezone.utc)
 
 
-def _run_connector(db, kafka_consumer):
+def _run_connector(db, kafka_consumer, stream_type):
+    """
+    :param db: A SQLAlchemy database handle.
+    :param kafka_consumer: A KafkaConsumer subscribed to a topic.
+    :param stream_type: Must be either 'aggregate' or 'raw'.
+    """
+    import fastavro
     from io import BytesIO
     import json
     from sqlalchemy.orm.exc import NoResultFound
-    import fastavro
 
-    with open('./schema/aggregate.avsc', 'r') as f:
-        aggregate_schema = fastavro.parse_schema(json.load(f))
+    if stream_type == 'aggregate':
+        schema_file_name = './schema/aggregate-measurement.avsc'
+    elif stream_type == 'raw':
+        schema_file_name = './schema/raw-measurement.avsc'
+
+    with open(schema_file_name, 'r') as f:
+        schema = fastavro.parse_schema(json.load(f))
 
     for record in kafka_consumer:
         payload = BytesIO(record.value)
         try:
-            msg = fastavro.schemaless_reader(payload, aggregate_schema)
+            msg = fastavro.schemaless_reader(payload, schema)
             logger.debug(f"Received message from Kafka: {msg}")
         except:
             # Could not decode message.
@@ -64,15 +74,24 @@ def _run_connector(db, kafka_consumer):
                 .one()
             )
 
-            measurement = d.Measurement(
-                kit=kit,
-                peripheral=peripheral,
-                quantity_type=qt,
-                aggregate_type=msg['type'],
-                value=msg['value'],
-                start_datetime=utc_from_millis(msg['start_datetime']),
-                end_datetime=utc_from_millis(msg['end_datetime']),
-            )
+            if stream_type == 'aggregate':
+                measurement = d.AggregateMeasurement(
+                    kit=kit,
+                    peripheral=peripheral,
+                    quantity_type=qt,
+                    aggregate_type=msg['type'],
+                    value=msg['value'],
+                    start_datetime=utc_from_millis(msg['start_datetime']),
+                    end_datetime=utc_from_millis(msg['end_datetime']),
+                )
+            elif stream_type == 'raw':
+                measurement = d.RawMeasurement(
+                    kit=kit,
+                    peripheral=peripheral,
+                    quantity_type=qt,
+                    value=msg['value'],
+                    datetime=utc_from_millis(msg['datetime']),
+                )
             logger.debug(f"Measurement modeled as: {measurement.__dict__}")
             db.Session.add(measurement)
             db.Session.commit()
@@ -98,6 +117,77 @@ def _run_connector(db, kafka_consumer):
             )
 
 
+def _db_handle():
+    return d.DatabaseManager(
+        host=os.environ.get('DATABASE_HOST', 'database.ops'),
+        port=int(os.environ.get('DATABASE_PORT', '5432')),
+        username=os.environ.get('DATABASE_USERNAME', 'astroplant'),
+        password=os.environ.get('DATABASE_PASSWORD', 'astroplant'),
+        database=os.environ.get('DATABASE_DATABASE', 'astroplant'),
+    )
+
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+def setup_schema():
+    """
+    Set up the database schema.
+    """
+    db = _db_handle()
+    db.setup_schema()
+
+
+@cli.command()
+def insert_develop_data():
+    """
+    Insert data for development into the database. The development data includes
+    a kit configured for a simulated environment.
+    """
+    db = _db_handle()
+    db.insert_develop_data()
+
+
+@cli.command()
+@click.option('-s', '--stream', 'stream_type', default='aggregate',
+              show_default=True, type=click.Choice(['raw', 'aggregate']))
+def run(stream_type):
+    """
+    Run the measurements connector.
+    :param stream: Which measurements stream to consume from Kafka and input to
+    the database.
+    """
+    from kafka import KafkaConsumer
+
+    logger.info(f"Running {stream_type} connector.")
+
+    logger.debug("Creating Kafka consumer.")
+    kafka_host = os.environ.get('KAFKA_HOST', 'kafka.ops')
+    kafka_port = int(os.environ.get('KAFKA_PORT', '9092'))
+    kafka_username = os.environ.get('KAFKA_USERNAME')
+    kafka_password = os.environ.get('KAFKA_PASSWORD')
+    kafka_consumer_group = os.environ.get('KAFKA_CONSUMER_GROUP')
+
+    logger.info(f"Kafka bootstrapping to {kafka_host}:{kafka_port}.")
+    logger.info(f"Kafka consumer group: {kafka_consumer_group}.")
+    kafka_consumer = KafkaConsumer(
+        f'{stream_type}-schema',
+        bootstrap_servers=[f'{kafka_host}:{kafka_port}'],
+        group_id=kafka_consumer_group,
+        auto_offset_reset='earliest',  # Consume earliest available message.
+        security_protocol="SASL_PLAINTEXT" if kafka_username else "PLAINTEXT",
+        sasl_mechanism="PLAIN" if kafka_username else None,
+        sasl_plain_username=kafka_username,
+        sasl_plain_password=kafka_password
+    )
+
+    db = _db_handle()
+    _run_connector(db, kafka_consumer, stream_type)
+
+
 if __name__ == '__main__':
     logger = logging.getLogger("astroplant.kafka_db_connector")
     logger.setLevel(logging.DEBUG)
@@ -112,51 +202,4 @@ if __name__ == '__main__':
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        'command',
-        choices=[
-            'setup-schema',
-            'insert-develop-data',
-            'run',
-        ],
-    )
-    parser.parse_args()
-    args = parser.parse_args()
-
-    db = d.DatabaseManager(
-        host=os.environ.get('DATABASE_HOST', 'database.ops'),
-        port=int(os.environ.get('DATABASE_PORT', '5432')),
-        username=os.environ.get('DATABASE_USERNAME', 'astroplant'),
-        password=os.environ.get('DATABASE_PASSWORD', 'astroplant'),
-        database=os.environ.get('DATABASE_DATABASE', 'astroplant'),
-    )
-    if args.command == 'setup-schema':
-        db.setup_schema()
-    elif args.command == 'insert-develop-data':
-        db.insert_develop_data()
-    elif args.command == 'run':
-        from kafka import KafkaConsumer
-
-        logger.debug("Creating Kafka consumer.")
-        kafka_host = os.environ.get('KAFKA_HOST', 'kafka.ops')
-        kafka_port = int(os.environ.get('KAFKA_PORT', '9092'))
-        kafka_username = os.environ.get('KAFKA_USERNAME')
-        kafka_password = os.environ.get('KAFKA_PASSWORD')
-        kafka_consumer_group = os.environ.get('KAFKA_CONSUMER_GROUP')
-
-        logger.info(f"Kafka bootstrapping to {kafka_host}:{kafka_port}.")
-        logger.info(f"Kafka consumer group: {kafka_consumer_group}.")
-        kafka_consumer = KafkaConsumer(
-            'aggregate-schema',
-            bootstrap_servers=[f'{kafka_host}:{kafka_port}'],
-            group_id=kafka_consumer_group,
-            auto_offset_reset='earliest',  # Consume earliest available message.
-            security_protocol='SASL_PLAINTEXT',
-            sasl_mechanism='PLAIN',
-            sasl_plain_username=kafka_username,
-            sasl_plain_password=kafka_password
-        )
-
-        logger.info("Running connector.")
-        _run_connector(db, kafka_consumer)
+    cli()

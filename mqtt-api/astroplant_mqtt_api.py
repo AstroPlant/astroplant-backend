@@ -47,11 +47,11 @@ class Server(object):
 
         self._mqtt_client.reconnect_delay_set(min_delay=1, max_delay=128)
 
-        with open('./schema/aggregate.avsc', 'r') as f:
+        with open('./schema/aggregate-measurement.avsc', 'r') as f:
             self._aggregate_schema = fastavro.parse_schema(json.load(f))
 
-        with open('./schema/stream.avsc', 'r') as f:
-            self._stream_schema = fastavro.parse_schema(json.load(f))
+        with open('./schema/raw-measurement.avsc', 'r') as f:
+            self._raw_schema = fastavro.parse_schema(json.load(f))
 
         self._mqtt_client.username_pw_set(
             username=username,
@@ -85,8 +85,8 @@ class Server(object):
         # Subscribe to multiple topics.
         # Use QoS=2 to ensure exactly once delivery from the broker.
         self._mqtt_client.subscribe([
-            ("kit/+/measurement/realtime", 2),
-            ("kit/+/measurement/aggregate", 2)
+            ('kit/+/measurement/raw', 2),
+            ('kit/+/measurement/aggregate', 2)
         ])
 
     def _on_disconnect(self, client, user_data, rc):
@@ -123,21 +123,27 @@ class Server(object):
 
         if (
                 len(topic) != 4
-                or topic[0] != "kit"
-                or topic[2] != "measurement"
-                or not topic[3] in ["realtime", "aggregate"]
+                or topic[0] != 'kit'
+                or topic[2] != 'measurement'
+                or not topic[3] in ['raw', 'aggregate']
         ):
             raise UnrecognizedTopicError(msg.topic)
 
         kit_serial = topic[1]
         message_type = topic[3]
         pipeline = {
-                "realtime": {"avro_schema": self._stream_schema, "kafka_topic": "realtime-schema"},
-                "aggregate": {"avro_schema": self._aggregate_schema, "kafka_topic": "aggregate-schema"}
+                'raw': {
+                    'avro_schema': self._raw_schema,
+                    'kafka_topic': 'raw-schema'
+                },
+                'aggregate': {
+                    'avro_schema': self._aggregate_schema,
+                    'kafka_topic': 'aggregate-schema'
+                }
         }
 
         try:
-            message = fastavro.schemaless_reader(payload, pipeline[message_type]["avro_schema"])
+            message = fastavro.schemaless_reader(payload, pipeline[message_type]['avro_schema'])
         except:
             raise AvroDecoderError(kit_serial)
 
@@ -147,12 +153,12 @@ class Server(object):
         msg = BytesIO()
         fastavro.schemaless_writer(
             msg,
-            pipeline[message_type]["avro_schema"],
+            pipeline[message_type]['avro_schema'],
             message
         )
 
         result = self._kafka_producer.send(
-            topic=pipeline[message_type]["kafka_topic"],
+            topic=pipeline[message_type]['kafka_topic'],
             value=msg.getvalue(),
         )
         result.add_callback(
@@ -170,7 +176,7 @@ class Server(object):
 
 
 if __name__ == "__main__":
-    logger = logging.getLogger("astroplant.mqtt_api")
+    logger = logging.getLogger('astroplant.mqtt_api')
     logger.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler()
