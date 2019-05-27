@@ -22,7 +22,7 @@ class RangeResource(Resource):
 
     @api.doc('Get aggregate measurements for a given kit.')
     @api.expect(query_parser, validate=True)
-    def put(self):
+    def get(self):
         args = query_parser.parse_args()
         csv = db_utils.get_aggregate_csv(args['kit_serial'], args['time_from'], args['time_to'])
 
