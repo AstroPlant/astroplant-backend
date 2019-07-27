@@ -2,7 +2,7 @@ import os
 import logging
 import datetime
 from sqlalchemy import create_engine, event, exc
-from sqlalchemy import Column, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, UniqueConstraint, PrimaryKeyConstraint
 from sqlalchemy import Integer, Float, String, Text, DateTime, Boolean, DECIMAL
 from sqlalchemy import types, Table
 from sqlalchemy.ext.declarative import declarative_base
@@ -121,6 +121,11 @@ Kit.users = relationship(
 peripheral_definition_expected_quantity_types = Table(
     'peripheral_definition_expected_quantity_type',
     Base.metadata,
+    Column(
+        'id',
+        Integer,
+    ),
+    PrimaryKeyConstraint('id'),
     Column(
         'quantity_type_id',
         Integer,
