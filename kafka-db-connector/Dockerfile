@@ -17,8 +17,8 @@ RUN apk add --update --no-cache --virtual .fetch-deps \
     postgresql-dev gcc python3-dev musl-dev
 
 ADD requirements.txt /
-ADD connector /
-ADD schema /
+ADD connector /connector
+ADD schema /schema
 
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
@@ -35,4 +35,4 @@ ENV KAFKA_PASSWORD=
 ENV KAFKA_CONSUMER_GROUP=server-aggregate-group
 ENV SCHEMA_REGISTRY_URL=http://schema-registry-cp-schema-registry.default.svc.cluster.local:8081  
 
-CMD [ "python", "connector.py", "run", "--stream", "aggregate" ]
+CMD [ "python", "connector/connector.py", "run", "--stream", "aggregate" ]

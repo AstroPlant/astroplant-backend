@@ -50,6 +50,6 @@ export DOCKER_ID_USER="salekd"
 docker login https://index.docker.io/v1/
 
 docker build . -f Dockerfile -t astroplant-kafka2db
-docker tag astroplant-kafka2db $DOCKER_ID_USER/astroplant-kafka2db:0.0.2
-docker push $DOCKER_ID_USER/astroplant-kafka2db:0.0.2
+docker tag astroplant-kafka2db $DOCKER_ID_USER/astroplant-kafka2db:0.0.3
+docker push $DOCKER_ID_USER/astroplant-kafka2db:0.0.3
 ```
