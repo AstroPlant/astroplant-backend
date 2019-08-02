@@ -1,0 +1,10 @@
+{
+    "kit_serial": "k_develop",
+    "peripheral": "Virtual barometer",
+    "physical_quantity": "Pressure",
+    "physical_unit": "Hectopascal",
+    "start_datetime": 1556269972012,
+    "end_datetime": 1556269977015,
+    "type": "maximum",
+    "value": 999.3122409402728
+}
