@@ -30,9 +30,7 @@ docker push $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.2
 ```shell
 $ mkvirtualenv astroplant
 $ pip install -r requirements.txt
-
 $ workon astroplant
 
-$ source env.sh
 $ python astroplant_mqtt_api.py
 ```
