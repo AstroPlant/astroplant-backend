@@ -12,6 +12,9 @@ with open('example-aggregate.json', 'r') as f:
     msg_json = json.load(f)
 print(msg_json)
 
+with open('example-aggregate.avro', 'wb') as f:
+    fastavro.schemaless_writer(f, aggregate_schema, msg_json)
+
 stream = BytesIO()
 fastavro.schemaless_writer(stream, aggregate_schema, msg_json)
 msg_encoded = stream.getvalue()
