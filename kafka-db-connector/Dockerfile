@@ -18,6 +18,7 @@ RUN apk add --update --no-cache --virtual .fetch-deps \
 
 ADD requirements.txt /
 ADD connector /
+ADD schema /
 
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
@@ -31,8 +32,7 @@ ENV KAFKA_HOST=kafka-headless.default.svc.cluster.local
 ENV KAFKA_PORT=31090
 ENV KAFKA_USERNAME=
 ENV KAFKA_PASSWORD=
-ENV KAFKA_CONSUMER_GROUP=server-aggregate-schema-group
-ENV KAFKA_TOPIC=aggregate-schema
+ENV KAFKA_CONSUMER_GROUP=server-aggregate-group
 ENV SCHEMA_REGISTRY_URL=http://schema-registry-cp-schema-registry.default.svc.cluster.local:8081  
 
-CMD [ "python", "connector.py", "run" ]
+CMD [ "python", "connector.py", "run", "--stream", "aggregate" ]
