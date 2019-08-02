@@ -98,7 +98,7 @@ def _run_connector(db, kafka_consumer, stream_type):
             logger.debug(f"Measurement committed to database.")
 
             # Commit the offest manually after the message has been successfully processed.
-            kafka_consumer.commitSync()
+            kafka_consumer.commit()
         except NoResultFound:
             # Malformed measurement. Perhaps using an old kit configuration?
             logger.warning(
@@ -116,7 +116,7 @@ def _run_connector(db, kafka_consumer, stream_type):
 
             # Commit the offest manually in case the message cannot be processed.
             # In this way, the consumer will proceed towards the next message.
-            kafka_consumer.commitSync()
+            kafka_consumer.commit()
         except:
             logger.exception(
                 f"Message {msg}: "
