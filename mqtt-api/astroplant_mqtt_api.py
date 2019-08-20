@@ -134,11 +134,11 @@ class Server(object):
         pipeline = {
                 'raw': {
                     'avro_schema': self._raw_schema,
-                    'kafka_topic': 'raw-schema'
+                    'kafka_topic': 'raw'
                 },
                 'aggregate': {
                     'avro_schema': self._aggregate_schema,
-                    'kafka_topic': 'aggregate-schema'
+                    'kafka_topic': 'aggregate'
                 }
         }
 

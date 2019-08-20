@@ -19,20 +19,18 @@ Set environment variables to configure the program.
 | `LOG_LEVEL` | The minimum level of logs shown. One of `DEBUG`, `INFO`, `WARNING`, `ERROR`. | `INFO` |
 
 ```shell
-$ export DOCKER_ID_USER="salekd"
-$ docker login https://index.docker.io/v1/
+export DOCKER_ID_USER="salekd"
+docker login https://index.docker.io/v1/
 
-$ docker build . -f Dockerfile -t astroplant-mqtt2kafka
-$ docker tag astroplant-mqtt2kafka $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.1
-$ docker push $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.1
+docker build . -f Dockerfile -t astroplant-mqtt2kafka
+docker tag astroplant-mqtt2kafka $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.2
+docker push $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.2
 ```
 
 ```shell
 $ mkvirtualenv astroplant
 $ pip install -r requirements.txt
-
 $ workon astroplant
 
-$ source env.sh
 $ python astroplant_mqtt_api.py
 ```

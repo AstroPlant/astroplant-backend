@@ -96,6 +96,9 @@ def _run_connector(db, kafka_consumer, stream_type):
             db.Session.add(measurement)
             db.Session.commit()
             logger.debug(f"Measurement committed to database.")
+
+            # Commit the offest manually after the message has been successfully processed.
+            kafka_consumer.commit()
         except NoResultFound:
             # Malformed measurement. Perhaps using an old kit configuration?
             logger.warning(
@@ -110,6 +113,10 @@ def _run_connector(db, kafka_consumer, stream_type):
                 "Unexpected invalid data in well-formed message: "
                 f"{payload}"
             )
+
+            # Commit the offest manually in case the message cannot be processed.
+            # In this way, the consumer will proceed towards the next message.
+            kafka_consumer.commit()
         except:
             logger.exception(
                 f"Message {msg}: "
@@ -173,11 +180,17 @@ def run(stream_type):
 
     logger.info(f"Kafka bootstrapping to {kafka_host}:{kafka_port}.")
     logger.info(f"Kafka consumer group: {kafka_consumer_group}.")
+
+    # Kafka consumer configuration
+    # - Consume earliest available message.
+    # - It is recommended to set the offest manually after the message has been processed.
+    # - Authentication is optional.
     kafka_consumer = KafkaConsumer(
-        f'{stream_type}-schema',
+        f'{stream_type}',
         bootstrap_servers=[f'{kafka_host}:{kafka_port}'],
         group_id=kafka_consumer_group,
-        auto_offset_reset='earliest',  # Consume earliest available message.
+        auto_offset_reset='earliest',
+        enable_auto_commit=False,
         security_protocol="SASL_PLAINTEXT" if kafka_username else "PLAINTEXT",
         sasl_mechanism="PLAIN" if kafka_username else None,
         sasl_plain_username=kafka_username,
