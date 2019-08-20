@@ -5,6 +5,7 @@ from sqlalchemy import create_engine, event, exc
 from sqlalchemy import Column, ForeignKey, UniqueConstraint, PrimaryKeyConstraint
 from sqlalchemy import Integer, Float, String, Text, DateTime, Boolean, DECIMAL
 from sqlalchemy import types, Table
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship
 
@@ -14,28 +15,28 @@ logger = logging.getLogger('astroplant.connector.database')
 Base = declarative_base()
 
 
-class UTCDateTime(types.TypeDecorator):
-    """
-    Marshall between Python UTC datetime and SQL naive datetime.
-    """
-    impl = types.DateTime
+# class UTCDateTime(types.TypeDecorator):
+#     """
+#     Marshall between Python UTC datetime and SQL naive datetime.
+#     """
+#     impl = types.DateTime
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, timezone=False, **kwargs)
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, timezone=False, **kwargs)
 
-    def process_bind_param(self, value: datetime.datetime, dialect):
-        if value is not None:
-            assert value.tzinfo is datetime.timezone.utc, (
-                "Datetimes must be UTC before hitting the database"
-            )
+#     def process_bind_param(self, value: datetime.datetime, dialect):
+#         if value is not None:
+#             assert value.tzinfo is datetime.timezone.utc, (
+#                 "Datetimes must be UTC before hitting the database"
+#             )
 
-        return value
+#         return value
 
-    def process_result_value(self, value: datetime.datetime, dialect):
-        if value is not None:
-            return value.replace(tzinfo=datetime.timezone.utc)
-        else:
-            return value
+#     def process_result_value(self, value: datetime.datetime, dialect):
+#         if value is not None:
+#             return value.replace(tzinfo=datetime.timezone.utc)
+#         else:
+#             return value
 
 
 def utc_now():
@@ -48,12 +49,39 @@ class User(Base):
     """
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True)
-    username = Column(String(40), unique=True, nullable=False, index=True)
-    password = Column(String(255), nullable=False)
-    email_address = Column(String(255), unique=True, nullable=False, index=True)
-    use_gravatar = Column(Boolean, nullable=False, default=True)
-    gravatar_alternative = Column(String(255), nullable=False)
+    id = Column(
+        Integer,
+        primary_key=True,
+    )
+    username = Column(
+        String(40),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+    display_name = Column(
+        String(40),
+        nullable=False,
+    )
+    password_hash = Column(
+        String(255),
+        nullable=False,
+    )
+    email_address = Column(
+        String(255),
+        unique=True,
+        nullable=False,
+        index=True,
+    )
+    use_email_address_for_gravatar = Column(
+        Boolean,
+        nullable=False,
+        default=True,
+    )
+    gravatar_alternative = Column(
+        String(255),
+        nullable=False,
+    )
 
 
 class Kit(Base):
@@ -64,6 +92,7 @@ class Kit(Base):
 
     id = Column(Integer, primary_key=True)
     serial = Column(String(20), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
     name = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)
     latitude = Column(DECIMAL(11, 8), nullable=True)
@@ -83,7 +112,10 @@ class KitMembership(Base):
     """
     __tablename__ = 'kit_memberships'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+    )
     user_id = Column(
         Integer,
         ForeignKey(User.id, onupdate='CASCADE', ondelete='CASCADE'),
@@ -97,13 +129,28 @@ class KitMembership(Base):
         index=True,
     )
     datetime_linked = Column(
-        UTCDateTime,
+        DateTime(timezone=True),
         nullable=False,
         default=utc_now
     )
 
-    user = relationship('User', back_populates='kits')
-    kit = relationship('Kit', back_populates='users')
+    access_super = Column(
+        Boolean,
+        nullable=False,
+    )
+    access_configure = Column(
+        Boolean,
+        nullable=False,
+    )
+
+    user = relationship(
+        'User',
+        back_populates='kits',
+    )
+    kit = relationship(
+        'Kit',
+        back_populates='users',
+    )
 
 
 User.kits = relationship(
@@ -114,6 +161,44 @@ User.kits = relationship(
 Kit.users = relationship(
     'KitMembership',
     order_by=KitMembership.datetime_linked,
+    back_populates='kit',
+)
+
+
+class KitConfiguration(Base):
+    """
+    Model of configuration for kits.
+    """
+    __tablename__ = 'kit_configurations'
+
+    id = Column(
+        Integer,
+        primary_key=True,
+    )
+    kit_id = Column(
+        Integer,
+        ForeignKey(
+            Kit.id,
+            onupdate='CASCADE',
+            ondelete='CASCADE',
+        ),
+        nullable=False,
+    )
+    active = Column(
+        Boolean,
+        nullable=False,
+        index=True,
+    )
+
+    kit = relationship(
+        'Kit',
+        back_populates='configurations',
+    )
+
+
+Kit.configurations = relationship(
+    'KitConfiguration',
+    order_by=KitConfiguration.id,
     back_populates='kit',
 )
 
@@ -130,11 +215,13 @@ peripheral_definition_expected_quantity_types = Table(
         'quantity_type_id',
         Integer,
         ForeignKey('quantity_types.id'),
+        nullable=False,
     ),
     Column(
         'peripheral_definition_id',
         Integer,
         ForeignKey('peripheral_definitions.id'),
+        nullable=False,
     ),
 )
 
@@ -145,10 +232,22 @@ class QuantityType(Base):
     """
     __tablename__ = 'quantity_types'
 
-    id = Column(Integer, primary_key=True)
-    physical_quantity = Column(String(255), nullable=False)
-    physical_unit = Column(String(255), nullable=False)
-    physical_unit_symbol = Column(String(255), nullable=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+    )
+    physical_quantity = Column(
+        String(255),
+        nullable=False,
+    )
+    physical_unit = Column(
+        String(255),
+        nullable=False,
+    )
+    physical_unit_symbol = Column(
+        String(255),
+        nullable=True,
+    )
 
     __table_args__ = (
         UniqueConstraint('physical_quantity', 'physical_unit'),
@@ -162,56 +261,47 @@ class PeripheralDefinition(Base):
     """
     __tablename__ = 'peripheral_definitions'
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String(100), unique=True, nullable=False)
-    description = Column(Text, nullable=True)
-    brand = Column(String(100), nullable=True)
-    model = Column(String(100), nullable=True)
-    module_name = Column(String(255), nullable=False)
-    class_name = Column(String(255), nullable=False)
+    id = Column(
+        Integer,
+        primary_key=True,
+    )
+    name = Column(
+        String(100),
+        unique=True,
+        nullable=False,
+    )
+    description = Column(
+        Text,
+        nullable=True,
+    )
+    brand = Column(
+        String(100),
+        nullable=True,
+    )
+    model = Column(
+        String(100),
+        nullable=True,
+    )
+    module_name = Column(
+        String(255),
+        nullable=False,
+    )
+    class_name = Column(
+        String(255),
+        nullable=False,
+    )
+
+    # A JSON schema http://json-schema.org/.
+    configuration_schema = Column(
+        JSON,
+        nullable=False,
+    )
+
     quantity_types = relationship(
         'QuantityType',
         secondary=peripheral_definition_expected_quantity_types,
-        backref='peripheral_definitions'
+        backref='peripheral_definitions',
     )
-
-
-class PeripheralConfigurationDefinition(Base):
-    """
-    Model to hold the definitions for configuration options of peripheral
-    devices.
-    """
-    __tablename__ = 'peripheral_configuration_definitions'
-
-    id = Column(Integer, primary_key=True)
-    peripheral_definition_id = Column(
-        Integer,
-        ForeignKey(
-            PeripheralDefinition.id,
-            onupdate='CASCADE',
-            ondelete='CASCADE',
-            ),
-        nullable=False,
-    )
-    name = Column(String(100), nullable=False)
-    default_value = Column(Text, nullable=True)
-    description = Column(Text)
-
-    peripheral_definition = relationship(
-        'PeripheralDefinition',
-        back_populates='configuration_definitions',
-    )
-
-    __table_args__ = (
-        UniqueConstraint('peripheral_definition_id', 'name'),
-    )
-
-
-PeripheralDefinition.configuration_definitions = relationship(
-    'PeripheralConfigurationDefinition',
-    order_by=PeripheralConfigurationDefinition.id,
-    back_populates='peripheral_definition',
-)
 
 
 class Peripheral(Base):
@@ -221,12 +311,24 @@ class Peripheral(Base):
     """
     __tablename__ = 'peripherals'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+    )
     kit_id = Column(
         Integer,
         ForeignKey(Kit.id, onupdate='CASCADE', ondelete='CASCADE'),
         nullable=False,
         index=True,
+    )
+    kit_configuration_id = Column(
+        Integer,
+        ForeignKey(
+            KitConfiguration.id,
+            onupdate='CASCADE',
+            ondelete='CASCADE',
+        ),
+        nullable=False,
     )
     peripheral_definition_id = Column(
         Integer,
@@ -237,17 +339,24 @@ class Peripheral(Base):
         ),
         nullable=False,
     )
-    name = Column(String(255), nullable=False)
-    active = Column(Boolean, nullable=False, default=True)
-    added_datetime = Column(
-        UTCDateTime,
+    name = Column(
+        String(255),
         nullable=False,
-        default=utc_now,
     )
-    removed_datetime = Column(UTCDateTime, nullable=True)
+
+    # Must conform to the JSON schema defined by the parent peripheral
+    # definition.
+    configuration = Column(
+        JSON,
+        nullable=False,
+    )
 
     kit = relationship(
         'Kit',
+        back_populates='peripherals',
+    )
+    kit_configuration = relationship(
+        'KitConfiguration',
         back_populates='peripherals',
     )
     peripheral_definition = relationship(
@@ -260,60 +369,15 @@ Kit.peripherals = relationship(
     order_by=Peripheral.id,
     back_populates='kit',
 )
+KitConfiguration.peripherals = relationship(
+    'Peripheral',
+    order_by=Peripheral.id,
+    back_populates='kit_configuration'
+)
 PeripheralDefinition.peripherals = relationship(
     'Peripheral',
     order_by=Peripheral.id,
     back_populates='peripheral_definition',
-)
-
-
-class PeripheralConfiguration(Base):
-    """
-    Model of configuration for individual peripheral devices.
-    """
-    __tablename__ = 'peripheral_configurations'
-
-    id = Column(Integer, primary_key=True)
-    peripheral_id = Column(
-        Integer,
-        ForeignKey(
-            Peripheral.id,
-            onupdate='CASCADE',
-            ondelete='CASCADE',
-        ),
-        nullable=False,
-    )
-    peripheral_configuration_definition_id = Column(
-        Integer,
-        ForeignKey(
-            PeripheralConfigurationDefinition.id,
-            onupdate='CASCADE',
-            ondelete='CASCADE',
-        ),
-        nullable=False,
-    )
-    value = Column(Text, nullable=True)
-
-    peripheral = relationship(
-        'Peripheral',
-        back_populates='configurations',
-    )
-    configuration_definition = relationship(
-        'PeripheralConfigurationDefinition',
-    )
-
-    __table_args__ = (
-        UniqueConstraint(
-            'peripheral_id',
-            'peripheral_configuration_definition_id',
-        ),
-    )
-
-
-Peripheral.configurations = relationship(
-    'PeripheralConfiguration',
-    order_by=PeripheralConfiguration.id,
-    back_populates='peripheral',
 )
 
 
@@ -323,7 +387,10 @@ class RawMeasurement(Base):
     """
     __tablename__ = 'raw_measurements'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(
+        Integer,
+        primary_key=True,
+    )
     peripheral_id = Column(
         Integer,
         ForeignKey(Peripheral.id, onupdate='CASCADE', ondelete='CASCADE'),
@@ -336,14 +403,27 @@ class RawMeasurement(Base):
         nullable=False,
         index=True,
     )
+    kit_configuration_id = Column(
+        Integer,
+        ForeignKey(KitConfiguration.id, onupdate='CASCADE', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
     quantity_type_id = Column(
         Integer,
         ForeignKey(QuantityType.id, onupdate='CASCADE', ondelete='CASCADE'),
         nullable=False,
         index=True,
     )
-    value = Column(Float)
-    datetime = Column(UTCDateTime, index=True)
+    value = Column(
+        Float,
+        nullable=False,
+    )
+    datetime = Column(
+        DateTime(timezone=True),
+        index=True,
+        nullable=False,
+    )
 
     peripheral = relationship(
         'Peripheral',
@@ -353,8 +433,12 @@ class RawMeasurement(Base):
         'Kit',
         back_populates='raw_measurements',
     )
+    kit_configuration = relationship(
+        'KitConfiguration',
+        back_populates='raw_measurements',
+    )
     quantity_type = relationship(
-        'QuantityType'
+        'QuantityType',
     )
 
 
@@ -377,6 +461,12 @@ class AggregateMeasurement(Base):
         nullable=False,
         index=True,
     )
+    kit_configuration_id = Column(
+        Integer,
+        ForeignKey(KitConfiguration.id, onupdate='CASCADE', ondelete='CASCADE'),
+        nullable=False,
+        index=True,
+    )
     quantity_type_id = Column(
         Integer,
         ForeignKey(QuantityType.id, onupdate='CASCADE', ondelete='CASCADE'),
@@ -384,9 +474,20 @@ class AggregateMeasurement(Base):
         index=True,
     )
     aggregate_type = Column(String(50), nullable=False)
-    value = Column(Float)
-    start_datetime = Column(UTCDateTime, index=True)
-    end_datetime = Column(UTCDateTime, index=True)
+    value = Column(
+        Float,
+        nullable=False,
+    )
+    start_datetime = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+    )
+    end_datetime = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+    )
 
     peripheral = relationship(
         'Peripheral',
@@ -396,8 +497,12 @@ class AggregateMeasurement(Base):
         'Kit',
         back_populates='aggregate_measurements',
     )
+    kit_configuration = relationship(
+        'KitConfiguration',
+        back_populates='aggregate_measurements',
+    )
     quantity_type = relationship(
-        'QuantityType'
+        'QuantityType',
     )
 
 
@@ -420,6 +525,16 @@ Kit.aggregate_measurements = relationship(
     'AggregateMeasurement',
     order_by=AggregateMeasurement.end_datetime,
     back_populates='kit',
+)
+KitConfiguration.raw_measurements = relationship(
+    'RawMeasurement',
+    order_by=RawMeasurement.datetime,
+    back_populates='kit_configuration',
+)
+KitConfiguration.aggregate_measurements = relationship(
+    'AggregateMeasurement',
+    order_by=AggregateMeasurement.end_datetime,
+    back_populates='kit_configuration',
 )
 
 
@@ -505,11 +620,41 @@ class DatabaseManager(object):
         )
         self.Session.add(qt_light_intensity)
 
-        config_time_sleep = PeripheralConfigurationDefinition(
-            name = "time_sleep",
-            default_value = "3000",
-            description = "Time to sleep between measurements in milliseconds.",
-        )
+        config_time_sleep = {
+            "type": "object",
+            "required": [
+                "timeSleep"
+            ],
+            "properties": {
+                "timeSleep": {
+                    "title": "Time to sleep",
+                    "description": "Time to sleep between taking measurements in milliseconds.",
+                    "type": "integer",
+                    "default": 3000,
+                }
+            }
+        }
+
+        config_local_data_logger = {
+            "type": "object",
+            "required": [
+                "storagePath",
+            ],
+            "properties": {
+                "storagePath": {
+                    "title": "Storage path",
+                    "description": "The path to store log files locally. Either absolute, or relative to the program working directory.",
+                    "type": "string",
+                    "default": "./data",
+                }
+            }
+        }
+
+        instance_config_time_sleep_3500 = {
+            "sleepTime": 3500,
+        }
+        instance_config_time_sleep_empty = {}
+        instance_local_data_logger_empty = {}
 
         pd_v_temperature = PeripheralDefinition(
             name = "Virtual temperature sensor",
@@ -523,9 +668,7 @@ class DatabaseManager(object):
             quantity_types=[
                 qt_temperature,
             ],
-            configuration_definitions=[
-                copy.deepcopy(config_time_sleep)
-            ],
+            configuration_schema=config_time_sleep,
         )
         self.Session.add(pd_v_temperature)
 
@@ -541,9 +684,7 @@ class DatabaseManager(object):
             quantity_types = [
                 qt_pressure,
             ],
-            configuration_definitions=[
-                copy.deepcopy(config_time_sleep)
-            ],
+            configuration_schema=config_time_sleep,
         )
         self.Session.add(pd_v_pressure)
 
@@ -561,9 +702,7 @@ class DatabaseManager(object):
                 qt_pressure,
                 qt_humidity,
             ],
-            configuration_definitions=[
-                copy.deepcopy(config_time_sleep)
-            ],
+            configuration_schema=config_time_sleep,
         )
         self.Session.add(pd_v_barometer)
 
@@ -576,33 +715,36 @@ class DatabaseManager(object):
             model="Logger",
             module_name='peripheral',
             class_name='LocalDataLogger',
-            configuration_definitions=[
-                PeripheralConfigurationDefinition(
-                    name='storage_path',
-                    default_value='./data',
-                    description=(
-                        "The storage path. Either absolute, or "
-                        "relative to the program working directory."
-                    ),
-                )
-            ],
+            configuration_schema=config_local_data_logger,
         )
         self.Session.add(pd_local_data_logger)
 
         kit_develop = Kit(
             serial='k_develop',
+            password_hash='pbkdf2$sha256$2000$Z416JHE8vSmaiamV5TRz$z3y6FvWAZtyQe6TV+O/oyhC3oqnF8KJdlB5Lphi+Lwg=',
+        )
+
+        kit_develop_configuration = KitConfiguration(
+            kit=kit_develop,
+            active=True,
             peripherals=[
                 Peripheral(
                     name="Virtual temperature",
                     peripheral_definition=pd_v_temperature,
+                    kit=kit_develop,
+                    configuration=instance_config_time_sleep_3500,
                 ),
                 Peripheral(
                     name="Virtual pressure",
                     peripheral_definition=pd_v_pressure,
+                    kit=kit_develop,
+                    configuration=instance_config_time_sleep_empty,
                 ),
                 Peripheral(
                     name="Virtual barometer",
                     peripheral_definition=pd_v_barometer,
+                    kit=kit_develop,
+                    configuration=instance_config_time_sleep_empty,
                 ),
             ],
         )
