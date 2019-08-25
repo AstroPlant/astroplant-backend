@@ -696,7 +696,7 @@ class DatabaseManager(object):
             brand="AstroPlant Virtual",
             model="Barometer",
             module_name = 'astroplant_simulation.sensors',
-            class_name = 'Temperature',
+            class_name = 'Barometer',
             quantity_types=[
                 qt_temperature,
                 qt_pressure,
