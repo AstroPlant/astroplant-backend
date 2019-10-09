@@ -187,7 +187,13 @@ class KitConfiguration(Base):
     active = Column(
         Boolean,
         nullable=False,
+        default=False,
         index=True,
+    )
+    never_used = Column(
+        Boolean,
+        nullable=False,
+        default=True,
     )
 
     kit = relationship(
