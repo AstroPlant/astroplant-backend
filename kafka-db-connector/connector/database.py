@@ -175,10 +175,6 @@ class KitConfiguration(Base):
         Integer,
         primary_key=True,
     )
-    description = Column(
-        Text,
-        nullable=True,
-    )
     kit_id = Column(
         Integer,
         ForeignKey(
@@ -187,6 +183,10 @@ class KitConfiguration(Base):
             ondelete='CASCADE',
         ),
         nullable=False,
+    )
+    description = Column(
+        Text,
+        nullable=True,
     )
     active = Column(
         Boolean,
