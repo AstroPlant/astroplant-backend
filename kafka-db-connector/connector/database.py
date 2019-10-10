@@ -76,7 +76,7 @@ class User(Base):
     use_email_address_for_gravatar = Column(
         Boolean,
         nullable=False,
-        default=True,
+        server_default="true",
     )
     gravatar_alternative = Column(
         String(255),
@@ -97,11 +97,15 @@ class Kit(Base):
     description = Column(Text, nullable=True)
     latitude = Column(DECIMAL(11, 8), nullable=True)
     longitude = Column(DECIMAL(11, 8), nullable=True)
-    privacy_public_dashboard = Column(Boolean, nullable=False, default=False)
+    privacy_public_dashboard = Column(
+        Boolean,
+        nullable=False,
+        server_default="false",
+    )
     privacy_show_on_map = Column(
         Boolean,
         nullable=False,
-        default=False,
+        server_default="false",
         index=True,
     )
 
@@ -191,13 +195,13 @@ class KitConfiguration(Base):
     active = Column(
         Boolean,
         nullable=False,
-        default=False,
+        server_default="false",
         index=True,
     )
     never_used = Column(
         Boolean,
         nullable=False,
-        default=True,
+        server_default="true",
     )
 
     kit = relationship(
@@ -736,7 +740,9 @@ class DatabaseManager(object):
 
         kit_develop_configuration = KitConfiguration(
             kit=kit_develop,
+            description="Test Config",
             active=True,
+            never_used=False,
             peripherals=[
                 Peripheral(
                     name="Virtual temperature",
