@@ -175,6 +175,10 @@ class KitConfiguration(Base):
         Integer,
         primary_key=True,
     )
+    description = Column(
+        Text,
+        nullable=True,
+    )
     kit_id = Column(
         Integer,
         ForeignKey(
