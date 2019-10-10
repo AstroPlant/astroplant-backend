@@ -2,7 +2,7 @@ import os
 import logging
 import datetime
 from sqlalchemy import create_engine, event, exc
-from sqlalchemy import Column, ForeignKey, UniqueConstraint, PrimaryKeyConstraint
+from sqlalchemy import Column, ForeignKey, UniqueConstraint, PrimaryKeyConstraint, CheckConstraint
 from sqlalchemy import Integer, Float, String, Text, DateTime, Boolean, DECIMAL
 from sqlalchemy import types, Table
 from sqlalchemy.dialects.postgresql import JSON
@@ -207,6 +207,13 @@ class KitConfiguration(Base):
     kit = relationship(
         'Kit',
         back_populates='configurations',
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            'NOT (active AND never_used)',
+            name='active_and_never_used',
+        ),
     )
 
 
