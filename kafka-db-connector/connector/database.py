@@ -192,6 +192,18 @@ class KitConfiguration(Base):
         Text,
         nullable=True,
     )
+    rules_supervisor_module_name = Column(
+        Text,
+        nullable=False,
+    )
+    rules_supervisor_class_name = Column(
+        Text,
+        nullable=False,
+    )
+    rules = Column(
+        JSON,
+        nullable=False,
+    )
     active = Column(
         Boolean,
         nullable=False,
@@ -225,7 +237,7 @@ Kit.configurations = relationship(
 
 
 peripheral_definition_expected_quantity_types = Table(
-    'peripheral_definition_expected_quantity_type',
+    'peripheral_definition_expected_quantity_types',
     Base.metadata,
     Column(
         'id',
@@ -316,6 +328,14 @@ class PeripheralDefinition(Base):
     configuration_schema = Column(
         JSON,
         nullable=False,
+    )
+
+    # A JSON schema http://json-schema.org/.
+    # If null, the peripheral does not accept commands.
+    command_schema = Column(
+        JSON,
+        nullable=True,
+        server_default=None,
     )
 
     quantity_types = relationship(
@@ -727,6 +747,21 @@ class DatabaseManager(object):
         )
         self.Session.add(pd_v_barometer)
 
+        pd_v_heater = PeripheralDefinition(
+            name = "Virtual heater",
+            description = (
+                "A virtual heater using the environment simulation."
+            ),
+            brand="AstroPlant Virtual",
+            model="Heater",
+            module_name = 'astroplant_simulation.actuators',
+            class_name = 'Heater',
+            quantity_types=[],
+            configuration_schema={ "type": "null", "default": None },
+            command_schema={ "type": "number", "title": "Intensity", "minimum": 0, "maximum": 100 },
+        )
+        self.Session.add(pd_v_heater)
+
         pd_local_data_logger = PeripheralDefinition(
             name = "Local data logger",
             description = (
@@ -748,6 +783,9 @@ class DatabaseManager(object):
         kit_develop_configuration = KitConfiguration(
             kit=kit_develop,
             description="Test Config",
+            rules_supervisor_module="astroplant_kit.supervisor",
+            rules_supervisor_class="AstroplantSupervisor",
+            rules={},
             active=True,
             never_used=False,
             peripherals=[
