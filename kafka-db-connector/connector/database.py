@@ -783,8 +783,8 @@ class DatabaseManager(object):
         kit_develop_configuration = KitConfiguration(
             kit=kit_develop,
             description="Test Config",
-            rules_supervisor_module="astroplant_kit.supervisor",
-            rules_supervisor_class="AstroplantSupervisor",
+            rules_supervisor_module_name="astroplant_kit.supervisor",
+            rules_supervisor_class_name="AstroplantSupervisor",
             rules={},
             active=True,
             never_used=False,
