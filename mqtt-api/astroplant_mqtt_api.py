@@ -9,10 +9,11 @@ Connects MQTT and Kafka.
 import os
 import paho.mqtt.client as mqtt
 from kafka import KafkaProducer
-import fastavro
-import json
 from io import BytesIO
 import logging
+
+
+from schema import astroplant_capnp
 
 
 class UnrecognizedTopicError(ValueError):
@@ -20,7 +21,7 @@ class UnrecognizedTopicError(ValueError):
         self.topic = topic
 
 
-class AvroDecoderError(ValueError):
+class CapnpDecoderError(ValueError):
     def __init__(self, kit_serial):
         self.kit_serial = kit_serial
 
@@ -46,12 +47,6 @@ class Server(object):
         self._mqtt_client.on_message = self._on_message_wrap
 
         self._mqtt_client.reconnect_delay_set(min_delay=1, max_delay=128)
-
-        with open('./schema/aggregate-measurement.avsc', 'r') as f:
-            self._aggregate_schema = fastavro.parse_schema(json.load(f))
-
-        with open('./schema/raw-measurement.avsc', 'r') as f:
-            self._raw_schema = fastavro.parse_schema(json.load(f))
 
         self._mqtt_client.username_pw_set(
             username=username,
@@ -131,48 +126,42 @@ class Server(object):
 
         kit_serial = topic[1]
         message_type = topic[3]
-        pipeline = {
-                'raw': {
-                    'avro_schema': self._raw_schema,
-                    'kafka_topic': 'raw'
-                },
-                'aggregate': {
-                    'avro_schema': self._aggregate_schema,
-                    'kafka_topic': 'aggregate'
-                }
-        }
 
-        try:
-            message = fastavro.schemaless_reader(payload, pipeline[message_type]['avro_schema'])
-        except:
-            raise AvroDecoderError(kit_serial)
+        message = None
+        if message_type == "raw":
+            try:
+                raw_measurement = astroplant_capnp.RawMeasurement.from_bytes_packed(payload)
+            except:
+                raise CapnpDecoderError(kit_serial)
+            logger.debug(f"Message {message_id}: decoded {raw_measurement}")
+            raw_measurement.kitSerial = kit_serial
+            message = raw_measurement.to_bytes_packed()
+        elif message_type == "aggregate":
+            try:
+                aggregate_measurement = astroplant_capnp.AggregateMeasurement.from_bytes_packed(payload)
+            except:
+                raise CapnpDecoderError(kit_serial)
+            logger.debug(f"Message {message_id}: decoded {aggregate_measurement}")
+            aggregate_measurement.kitSerial = kit_serial
+            message = raw_measurement.to_bytes_packed()
 
-        message['kit_serial'] = kit_serial
-        logger.debug(f"Message {message_id}: decoded {message}")
-
-        msg = BytesIO()
-        fastavro.schemaless_writer(
-            msg,
-            pipeline[message_type]['avro_schema'],
-            message
-        )
-
-        result = self._kafka_producer.send(
-            topic=pipeline[message_type]['kafka_topic'],
-            value=msg.getvalue(),
-        )
-        result.add_callback(
-            lambda res: logger.debug(
-                f"Message {message_id}: successfully sent to Kafka. "
-                f"Partition: {res.partition}. "
-                f"Offset: {res.offset}."
+        if message is not None:
+            result = self._kafka_producer.send(
+                topic=message_type,
+                value=message,
             )
-        )
-        result.add_errback(
-            lambda err: logger.warning(
-                f"Message {message_id} could not be sent to Kafka: {err}"
+            result.add_callback(
+                lambda res: logger.debug(
+                    f"Message {message_id}: successfully sent to Kafka. "
+                    f"Partition: {res.partition}. "
+                    f"Offset: {res.offset}."
+                )
             )
-        )
+            result.add_errback(
+                lambda err: logger.warning(
+                    f"Message {message_id} could not be sent to Kafka: {err}"
+                )
+            )
 
 
 if __name__ == "__main__":
