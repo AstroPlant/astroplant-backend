@@ -3,18 +3,22 @@ let
   python-packages = python-packages: [
     python-packages.pip
   ];
-  python-with-packages = python36.withPackages python-packages;
-in  
+  python-with-packages = python37.withPackages python-packages;
+in
   pkgs.mkShell {
     buildInputs = [
       bashInteractive
       ncurses
       python-with-packages
       postgresql
+      rdkafka
+      python37Packages.black
+      python37Packages.python-language-server
+      capnproto
     ];
     shellHook = ''
       export PIP_PREFIX="$(pwd)/_build/pip_packages"
-      export PYTHONPATH="$(pwd)/_build/pip_packages/lib/python3.6/site-packages:$PYTHONPATH" 
+      export PYTHONPATH="$(pwd)/_build/pip_packages/lib/python3.7/site-packages:$PYTHONPATH" 
       unset SOURCE_DATE_EPOCH
     '';
   }
