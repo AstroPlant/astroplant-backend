@@ -32,15 +32,15 @@ $ workon astroplant
 To initialize the database table schemas and add AstroPlant development data, execute:
 
 ```shell
-$ python connector/connector.py setup-schema
-$ python connector/connector.py insert-develop-data
+$ python kafka_db_connector/connector.py setup-schema
+$ python kafka_db_connector/connector.py insert-develop-data
 ```
 
 # Running the connector
 To run the connector, execute:
 
 ```shell
-$ python connector/connector.py run
+$ python kafka_db_connector/connector.py run
 ```
 
 # Docker

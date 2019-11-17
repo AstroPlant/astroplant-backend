@@ -32,5 +32,5 @@ $ mkvirtualenv astroplant
 $ pip install -r requirements.txt
 $ workon astroplant
 
-$ python astroplant_mqtt_api.py
+$ python mqtt_api/astroplant_mqtt_api.py
 ```
