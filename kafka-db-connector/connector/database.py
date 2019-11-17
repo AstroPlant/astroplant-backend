@@ -344,8 +344,8 @@ class AggregateMeasurement(Base):
     )
     aggregate_type = Column(String(50), nullable=False)
     value = Column(Float, nullable=False)
-    start_datetime = Column(DateTime(timezone=True), nullable=False, index=True)
-    end_datetime = Column(DateTime(timezone=True), nullable=False, index=True)
+    datetime_start = Column(DateTime(timezone=True), nullable=False, index=True)
+    datetime_end = Column(DateTime(timezone=True), nullable=False, index=True)
 
     peripheral = relationship("Peripheral", back_populates="aggregate_measurements")
     kit = relationship("Kit", back_populates="aggregate_measurements")
@@ -360,7 +360,7 @@ Peripheral.raw_measurements = relationship(
 )
 Peripheral.aggregate_measurements = relationship(
     "AggregateMeasurement",
-    order_by=AggregateMeasurement.end_datetime,
+    order_by=AggregateMeasurement.datetime_end,
     back_populates="peripheral",
 )
 Kit.raw_measurements = relationship(
@@ -368,7 +368,7 @@ Kit.raw_measurements = relationship(
 )
 Kit.aggregate_measurements = relationship(
     "AggregateMeasurement",
-    order_by=AggregateMeasurement.end_datetime,
+    order_by=AggregateMeasurement.datetime_end,
     back_populates="kit",
 )
 KitConfiguration.raw_measurements = relationship(
@@ -378,7 +378,7 @@ KitConfiguration.raw_measurements = relationship(
 )
 KitConfiguration.aggregate_measurements = relationship(
     "AggregateMeasurement",
-    order_by=AggregateMeasurement.end_datetime,
+    order_by=AggregateMeasurement.datetime_end,
     back_populates="kit_configuration",
 )
 
