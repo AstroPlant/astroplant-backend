@@ -9,7 +9,6 @@ Connects MQTT and Kafka.
 import os
 import paho.mqtt.client as mqtt
 from kafka import KafkaProducer
-from io import BytesIO
 import logging
 
 
@@ -99,10 +98,10 @@ class Server(object):
                 f"Message {self._message_id}: "
                 f"unrecognized MQTT topic: {e.topic}"
             )
-        except AvroDecoderError as e:
+        except CapnpDecoderError as e:
             logger.warning(
                 f"Message {self._message_id}: "
-                f"malformed avro message, from: {e.kit_serial}"
+                f"malformed capnp message, from: {e.kit_serial}"
             )
         except:
             logger.exception(
@@ -114,7 +113,6 @@ class Server(object):
         logger.debug(f"Message {message_id}: '{msg.topic}': {msg.payload}")
 
         topic = msg.topic.split("/")
-        payload = BytesIO(msg.payload)
 
         if (
                 len(topic) != 4
@@ -130,20 +128,22 @@ class Server(object):
         message = None
         if message_type == "raw":
             try:
-                raw_measurement = astroplant_capnp.RawMeasurement.from_bytes_packed(payload)
-            except:
+                raw_measurement = astroplant_capnp.RawMeasurement.from_bytes_packed(msg.payload)
+            except Exception as e:
                 raise CapnpDecoderError(kit_serial)
             logger.debug(f"Message {message_id}: decoded {raw_measurement}")
+            raw_measurement = astroplant_capnp.RawMeasurement.new_message(**raw_measurement.to_dict())
             raw_measurement.kitSerial = kit_serial
             message = raw_measurement.to_bytes_packed()
         elif message_type == "aggregate":
             try:
-                aggregate_measurement = astroplant_capnp.AggregateMeasurement.from_bytes_packed(payload)
+                aggregate_measurement = astroplant_capnp.AggregateMeasurement.from_bytes_packed(msg.payload)
             except:
                 raise CapnpDecoderError(kit_serial)
             logger.debug(f"Message {message_id}: decoded {aggregate_measurement}")
+            aggregate_measurement = astroplant_capnp.AggregateMeasurement.new_message(**aggregate_measurement.to_dict())
             aggregate_measurement.kitSerial = kit_serial
-            message = raw_measurement.to_bytes_packed()
+            message = aggregate_measurement.to_bytes_packed()
 
         if message is not None:
             result = self._kafka_producer.send(

@@ -5,12 +5,16 @@ This program consumes messages from the Kafka measurement message queue,
 and inserts them into the PostgreSQL database.
 """
 
-import os
 import logging
-import click
-import datetime
-import database as d
+import os
 import sys
+import datetime
+import uuid
+import click
+import database as d
+
+
+from schema import astroplant_capnp
 
 
 def utc_from_millis(t):
@@ -23,95 +27,88 @@ def _run_connector(db, kafka_consumer, stream_type):
     :param kafka_consumer: A KafkaConsumer subscribed to a topic.
     :param stream_type: Must be either 'aggregate' or 'raw'.
     """
-    import fastavro
     from io import BytesIO
     import json
     from sqlalchemy.orm.exc import NoResultFound
 
-    if stream_type == 'aggregate':
-        schema_file_name = './schema/aggregate-measurement.avsc'
-    elif stream_type == 'raw':
-        schema_file_name = './schema/raw-measurement.avsc'
+    logger.debug("Connector starting.")
 
-    with open(schema_file_name, 'r') as f:
-        schema = fastavro.parse_schema(json.load(f))
 
     for record in kafka_consumer:
-        payload = BytesIO(record.value)
-        try:
-            msg = fastavro.schemaless_reader(payload, schema)
-            logger.debug(f"Received message from Kafka: {msg}")
-        except:
-            # Could not decode message.
-            logger.warning(f"Could not decode message: {payload}")
-            continue
+        payload = record.value
+        received_measurement = None
+        if stream_type == "aggregate":
+            try:
+                received_measurement = astroplant_capnp.AggregateMeasurement.from_bytes_packed(payload)
+            except:
+                # Could not decode message.
+                logger.warning(f"Could not decode message: {payload}")
+                continue
+        elif stream_type == "raw":
+            try:
+                received_measurement = astroplant_capnp.RawMeasurement.from_bytes_packed(payload)
+            except:
+                # Could not decode message.
+                logger.warning(f"Could not decode message: {payload}")
+                continue
 
         try:
             kit = (
-                db.Session
-                .query(d.Kit)
-                .filter(d.Kit.serial==msg['kit_serial'])
-                .one()
+                db.Session.query(d.Kit).filter(d.Kit.serial == received_measurement.kitSerial).one()
             )
-
             peripheral = (
-                db.Session
-                .query(d.Peripheral)
-                .filter(
-                    d.Peripheral.name==msg['peripheral'],
-                    d.Peripheral.kit==kit
-                )
-                .one()
+                db.Session.query(d.Peripheral).filter(d.Peripheral.id == received_measurement.peripheral).one()
             )
+            print(peripheral.kit_configuration)
 
-            qt = (
-                db.Session
-                .query(d.QuantityType)
-                .filter(
-                    d.QuantityType.physical_quantity==msg['physical_quantity'],
-                    d.QuantityType.physical_unit==msg['physical_unit']
-                )
-                .one()
-            )
-
-            if stream_type == 'aggregate':
+            measurement = None
+            if stream_type == "aggregate":
                 measurement = d.AggregateMeasurement(
+                    id=uuid.UUID(bytes=received_measurement.id),
                     kit=kit,
-                    peripheral=peripheral,
-                    quantity_type=qt,
-                    aggregate_type=msg['type'],
-                    value=msg['value'],
-                    start_datetime=utc_from_millis(msg['start_datetime']),
-                    end_datetime=utc_from_millis(msg['end_datetime']),
+                    kit_configuration=peripheral.kit_configuration,
+                    peripheral_id=received_measurement.peripheral,
+                    quantity_type_id=received_measurement.quantityType,
+                    aggregate_type=received_measurement.aggregateType,
+                    value=received_measurement.value,
+                    datetime_start=utc_from_millis(received_measurement.datetimeStart),
+                    datetime_end=utc_from_millis(received_measurement.datetimeEnd),
                 )
-            elif stream_type == 'raw':
+            elif stream_type == "raw":
+                print(utc_from_millis(received_measurement.datetime))
+                print(uuid.UUID(bytes=received_measurement.id))
                 measurement = d.RawMeasurement(
+                    id=uuid.UUID(bytes=received_measurement.id),
                     kit=kit,
-                    peripheral=peripheral,
-                    quantity_type=qt,
-                    value=msg['value'],
-                    datetime=utc_from_millis(msg['datetime']),
+                    kit_configuration=peripheral.kit_configuration,
+                    peripheral_id=received_measurement.peripheral,
+                    quantity_type_id=received_measurement.quantityType,
+                    value=received_measurement.value,
+                    datetime=utc_from_millis(received_measurement.datetime),
                 )
+
             logger.debug(f"Measurement modeled as: {measurement.__dict__}")
             db.Session.add(measurement)
-            db.Session.commit()
-            logger.debug(f"Measurement committed to database.")
+            try:
+                db.Session.commit()
+                logger.debug(f"Measurement committed to database.")
+            except:
+                logger.debug(f"Error while committing to database.")
+                db.Session.rollback()
 
             # Commit the offest manually after the message has been successfully processed.
             kafka_consumer.commit()
         except NoResultFound:
             # Malformed measurement. Perhaps using an old kit configuration?
             logger.warning(
-                "Message not compatible with database (wrong config?): "
-                f"{msg}"
+                "Message not compatible with database (wrong config?): " f"{msg}"
             )
         except KeyError:
             # Malformed measurement. Not all required keys were available.
             # This indicates a serious logic error, as the message corresponds
             # to the Avro schema. As such, this case should never happen.
             logger.exception(
-                "Unexpected invalid data in well-formed message: "
-                f"{payload}"
+                "Unexpected invalid data in well-formed message: " f"{payload}"
             )
 
             # Commit the offest manually in case the message cannot be processed.
@@ -119,18 +116,17 @@ def _run_connector(db, kafka_consumer, stream_type):
             kafka_consumer.commit()
         except:
             logger.exception(
-                f"Message {msg}: "
-                "unexpected exception caught in message handler."
+                f"Unexpected exception caught in message handler."
             )
 
 
 def _db_handle():
     return d.DatabaseManager(
-        host=os.environ.get('DATABASE_HOST', 'database.ops'),
-        port=int(os.environ.get('DATABASE_PORT', '5432')),
-        username=os.environ.get('DATABASE_USERNAME', 'astroplant'),
-        password=os.environ.get('DATABASE_PASSWORD', 'astroplant'),
-        database=os.environ.get('DATABASE_DATABASE', 'astroplant'),
+        host=os.environ.get("DATABASE_HOST", "database.ops"),
+        port=int(os.environ.get("DATABASE_PORT", "5432")),
+        username=os.environ.get("DATABASE_USERNAME", "astroplant"),
+        password=os.environ.get("DATABASE_PASSWORD", "astroplant"),
+        database=os.environ.get("DATABASE_DATABASE", "astroplant"),
     )
 
 
@@ -149,18 +145,25 @@ def setup_schema():
 
 
 @cli.command()
-def insert_develop_data():
+@click.option("--simulation-definitions/--no-simulation-definitions", default=False)
+def insert_definitions(simulation_definitions):
     """
     Insert data for development into the database. The development data includes
     a kit configured for a simulated environment.
     """
     db = _db_handle()
-    db.insert_develop_data()
+    db.insert_definitions(simulation_definitions=simulation_definitions)
 
 
 @cli.command()
-@click.option('-s', '--stream', 'stream_type', default='aggregate',
-              show_default=True, type=click.Choice(['raw', 'aggregate']))
+@click.option(
+    "-s",
+    "--stream",
+    "stream_type",
+    default="aggregate",
+    show_default=True,
+    type=click.Choice(["raw", "aggregate"]),
+)
 def run(stream_type):
     """
     Run the measurements connector.
@@ -172,11 +175,11 @@ def run(stream_type):
     logger.info(f"Running {stream_type} connector.")
 
     logger.debug("Creating Kafka consumer.")
-    kafka_host = os.environ.get('KAFKA_HOST', 'kafka.ops')
-    kafka_port = int(os.environ.get('KAFKA_PORT', '9092'))
-    kafka_username = os.environ.get('KAFKA_USERNAME')
-    kafka_password = os.environ.get('KAFKA_PASSWORD')
-    kafka_consumer_group = os.environ.get('KAFKA_CONSUMER_GROUP')
+    kafka_host = os.environ.get("KAFKA_HOST", "kafka.ops")
+    kafka_port = int(os.environ.get("KAFKA_PORT", "9092"))
+    kafka_username = os.environ.get("KAFKA_USERNAME")
+    kafka_password = os.environ.get("KAFKA_PASSWORD")
+    kafka_consumer_group = os.environ.get("KAFKA_CONSUMER_GROUP")
 
     logger.info(f"Kafka bootstrapping to {kafka_host}:{kafka_port}.")
     logger.info(f"Kafka consumer group: {kafka_consumer_group}.")
@@ -186,30 +189,30 @@ def run(stream_type):
     # - It is recommended to set the offest manually after the message has been processed.
     # - Authentication is optional.
     kafka_consumer = KafkaConsumer(
-        f'{stream_type}',
-        bootstrap_servers=[f'{kafka_host}:{kafka_port}'],
+        f"{stream_type}",
+        bootstrap_servers=[f"{kafka_host}:{kafka_port}"],
         group_id=kafka_consumer_group,
-        auto_offset_reset='earliest',
+        auto_offset_reset="earliest",
         enable_auto_commit=False,
         security_protocol="SASL_PLAINTEXT" if kafka_username else "PLAINTEXT",
         sasl_mechanism="PLAIN" if kafka_username else None,
         sasl_plain_username=kafka_username,
-        sasl_plain_password=kafka_password
+        sasl_plain_password=kafka_password,
     )
 
     db = _db_handle()
     _run_connector(db, kafka_consumer, stream_type)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logger = logging.getLogger("astroplant.kafka_db_connector")
     logger.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.getLevelName(os.environ.get('LOG_LEVEL', 'INFO')))
+    ch.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
 
     formatter = logging.Formatter(
-        '%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s'
+        "%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     ch.setFormatter(formatter)
