@@ -11,7 +11,7 @@ from sqlalchemy import (
 )
 from sqlalchemy import Integer, Float, String, Text, DateTime, Boolean, DECIMAL
 from sqlalchemy import types, Table
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship
 
@@ -274,7 +274,7 @@ class RawMeasurement(Base):
 
     __tablename__ = "raw_measurements"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True)
     peripheral_id = Column(
         Integer,
         ForeignKey(Peripheral.id, onupdate="CASCADE", ondelete="CASCADE"),
@@ -317,7 +317,7 @@ class AggregateMeasurement(Base):
 
     __tablename__ = "aggregate_measurements"
 
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True)
     peripheral_id = Column(
         Integer,
         ForeignKey(Peripheral.id, onupdate="CASCADE", ondelete="CASCADE"),
