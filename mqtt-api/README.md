@@ -23,8 +23,8 @@ export DOCKER_ID_USER="salekd"
 docker login https://index.docker.io/v1/
 
 docker build . -f Dockerfile -t astroplant-mqtt2kafka
-docker tag astroplant-mqtt2kafka $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.2
-docker push $DOCKER_ID_USER/astroplant-mqtt2kafka:0.0.2
+docker tag astroplant-mqtt2kafka $DOCKER_ID_USER/astroplant-mqtt2kafka:0.1.0
+docker push $DOCKER_ID_USER/astroplant-mqtt2kafka:0.1.0
 ```
 
 ```shell

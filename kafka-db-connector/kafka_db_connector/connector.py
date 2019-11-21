@@ -101,8 +101,12 @@ def _run_connector(db, kafka_consumer, stream_type):
         except NoResultFound:
             # Malformed measurement. Perhaps using an old kit configuration?
             logger.warning(
-                "Message not compatible with database (wrong config?): " f"{msg}"
+                "Message not compatible with database (wrong config?): " f"{payload}"
             )
+
+            # Commit the offest manually in case the message cannot be processed.
+            # In this way, the consumer will proceed towards the next message.
+            kafka_consumer.commit()
         except KeyError:
             # Malformed measurement. Not all required keys were available.
             # This indicates a serious logic error, as the message corresponds

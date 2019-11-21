@@ -33,7 +33,7 @@ To initialize the database table schemas and add AstroPlant development data, ex
 
 ```shell
 $ python kafka_db_connector/connector.py setup-schema
-$ python kafka_db_connector/connector.py insert-develop-data
+$ python kafka_db_connector/connector.py insert-definitions
 ```
 
 # Running the connector
@@ -50,6 +50,6 @@ export DOCKER_ID_USER="salekd"
 docker login https://index.docker.io/v1/
 
 docker build . -f Dockerfile -t astroplant-kafka2db
-docker tag astroplant-kafka2db $DOCKER_ID_USER/astroplant-kafka2db:0.0.3
-docker push $DOCKER_ID_USER/astroplant-kafka2db:0.0.3
+docker tag astroplant-kafka2db $DOCKER_ID_USER/astroplant-kafka2db:0.1.0
+docker push $DOCKER_ID_USER/astroplant-kafka2db:0.1.0
 ```
