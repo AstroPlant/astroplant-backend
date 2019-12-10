@@ -149,7 +149,7 @@ def setup_schema():
 
 
 @cli.command()
-@click.option("--simulation-definitions/--no-simulation-definitions", default=False)
+@click.option("--simulation-definitions/--no-simulation-definitions", default=True)
 def insert_definitions(simulation_definitions):
     """
     Insert data for development into the database. The development data includes
