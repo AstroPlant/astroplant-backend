@@ -152,8 +152,8 @@ def setup_schema():
 @click.option("--simulation-definitions/--no-simulation-definitions", default=True)
 def insert_definitions(simulation_definitions):
     """
-    Insert data for development into the database. The development data includes
-    a kit configured for a simulated environment.
+    Insert AstroPlant's default quantity types and peripheral definitions into the
+    database.
     """
     db = _db_handle()
     db.insert_definitions(simulation_definitions=simulation_definitions)
