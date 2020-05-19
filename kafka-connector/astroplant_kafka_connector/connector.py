@@ -11,17 +11,20 @@ import sys
 import datetime
 import uuid
 import click
-import database as d
+import astroplant_database.specification as d
 
 
-from schema import astroplant_capnp
+from .schema import astroplant_capnp
+
+
+logger = logging.getLogger("astroplant_kafka_connector.kafka_listener")
 
 
 def utc_from_millis(t):
     return datetime.datetime.fromtimestamp(t / 1000, datetime.timezone.utc)
 
 
-def _run_connector(db, kafka_consumer, stream_type):
+def run_connector(db, kafka_consumer, stream_type):
     """
     :param db: A SQLAlchemy database handle.
     :param kafka_consumer: A KafkaConsumer subscribed to a topic.
@@ -64,9 +67,13 @@ def _run_connector(db, kafka_consumer, stream_type):
             peripheral = (
                 db.Session.query(d.Peripheral)
                 .filter(d.Peripheral.id == received_measurement.peripheral)
+                .filter(d.Peripheral.kit == kit)
                 .one()
             )
-            print(peripheral.kit_configuration)
+
+            if not kit or not peripheral:
+                logger.warning(f"Kit or peripheral not found for message {message_id}")
+                continue
 
             measurement = None
             if stream_type == "aggregate":
@@ -74,7 +81,7 @@ def _run_connector(db, kafka_consumer, stream_type):
                     id=uuid.UUID(bytes=received_measurement.id),
                     kit=kit,
                     kit_configuration=peripheral.kit_configuration,
-                    peripheral_id=received_measurement.peripheral,
+                    peripheral=peripheral,
                     quantity_type_id=received_measurement.quantityType,
                     aggregate_type=received_measurement.aggregateType,
                     value=received_measurement.value,
@@ -88,7 +95,7 @@ def _run_connector(db, kafka_consumer, stream_type):
                     id=uuid.UUID(bytes=received_measurement.id),
                     kit=kit,
                     kit_configuration=peripheral.kit_configuration,
-                    peripheral_id=received_measurement.peripheral,
+                    peripheral=peripheral,
                     quantity_type_id=received_measurement.quantityType,
                     value=received_measurement.value,
                     datetime=utc_from_millis(received_measurement.datetime),
@@ -145,26 +152,6 @@ def cli():
 
 
 @cli.command()
-def setup_schema():
-    """
-    Set up the database schema.
-    """
-    db = _db_handle()
-    db.setup_schema()
-
-
-@cli.command()
-@click.option("--simulation-definitions/--no-simulation-definitions", default=True)
-def insert_definitions(simulation_definitions):
-    """
-    Insert AstroPlant's default quantity types and peripheral definitions into the
-    database.
-    """
-    db = _db_handle()
-    db.insert_definitions(simulation_definitions=simulation_definitions)
-
-
-@cli.command()
 @click.option(
     "-s",
     "--stream",
@@ -211,20 +198,3 @@ def run(stream_type):
 
     db = _db_handle()
     _run_connector(db, kafka_consumer, stream_type)
-
-
-if __name__ == "__main__":
-    logger = logging.getLogger("astroplant.kafka_db_connector")
-    logger.setLevel(logging.DEBUG)
-
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
-
-    formatter = logging.Formatter(
-        "%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s"
-    )
-
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-
-    cli()

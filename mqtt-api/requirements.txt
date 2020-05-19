@@ -1,3 +1,0 @@
-paho-mqtt~=1.4.0
-kafka-python~=1.4.6
-pycapnp~=0.6.4
