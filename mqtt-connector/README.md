@@ -1,6 +1,7 @@
 # AstroPlant MQTT connector
 This program processes messages from AstroPlant kits over MQTT.
-Measurements are sent by kits to an MQTT topic specific to---and only writable by---that kit: `kit/<serial>/measurements/aggregate`.
+Measurements are sent by kits to MQTT topics specific to that kit: `kit/<serial>/measurements/aggregate` and `kit/<serial>/measurements/raw`.
+If the MQTT broker is publicly accessable, care should be taken to ensure kits can only write to their own topics.
 This program enforces the correct kit IDs are in the measurement and subsequently either enters the message into the database or passes the message on to Kafka.
 
 # Installing the module for development
