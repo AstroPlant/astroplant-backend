@@ -1,0 +1,93 @@
+version: '3'
+services:
+  astroplant-database:
+    build: ../database
+    environment:
+      POSTGRES_DB: astroplant
+      POSTGRES_USER: astroplant
+      POSTGRES_PASSWORD: astroplant
+    ports:
+      - 5432:5432
+  zookeeper:
+    image: 'bitnami/zookeeper:latest'
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+  kafka:
+    image: 'bitnami/kafka:latest'
+    depends_on:
+      - zookeeper
+    ports:
+      - 9092:9092
+      - 29092:29092
+    environment:
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,PLAINTEXT_HOST://:29092"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+  mqtt-broker:
+    image: eclipse-mosquitto:1.6.8
+    ports:
+      - 1883:1883
+    volumes:
+      - ./mqtt-broker/config:/mosquitto/config:ro
+  astroplant-mqtt-connector:
+    build:
+        context: ..
+        dockerfile: ./mqtt-connector/Dockerfile
+    depends_on:
+      - mqtt-broker
+      - kafka
+    environment:
+      KAFKA_HOST: kafka
+      MQTT_HOST: mqtt-broker
+      MQTT_USERNAME: server
+      MQTT_PASSWORD: abcdef
+      LOG_LEVEL: DEBUG
+    command: bash -c "sleep 10 ; astroplant-mqtt-connector to-kafka"
+  astroplant-kafka-connector-raw:
+    build:
+      context: ..
+      dockerfile: ./kafka-connector/Dockerfile
+    depends_on:
+      - kafka
+      - astroplant-database
+    environment:
+      DATABASE_URL: postgres+psycopg2://astroplant:astroplant@astroplant-database/astroplant
+      KAFKA_HOST: kafka
+      LOG_LEVEL: DEBUG
+    command: bash -c "sleep 10 ; astroplant-kafka-connector run --stream=raw"
+  astroplant-kafka-connector-aggregate:
+    build:
+      context: ..
+      dockerfile: ./kafka-connector/Dockerfile
+    depends_on:
+      - kafka
+      - astroplant-database
+    environment:
+      DATABASE_URL: postgres+psycopg2://astroplant:astroplant@astroplant-database/astroplant
+      KAFKA_HOST: kafka
+      LOG_LEVEL: DEBUG
+    command: bash -c "sleep 10 ; astroplant-kafka-connector run --stream=aggregate"
+  astroplant-api:
+    build: ../../astroplant-api
+    ports:
+      - 8080:8080
+    depends_on:
+      - astroplant-database
+      - mqtt-broker
+    environment:
+      DATABASE_URL: postgres://astroplant:astroplant@astroplant-database/astroplant
+      MQTT_HOST: mqtt-broker
+      MQTT_USERNAME: server
+      MQTT_PASSWORD: abcdef
+  astroplant-frontend-web:
+    build: ../../astroplant-frontend-web
+    depends_on:
+      - astroplant-api
+    ports:
+      - 3000:3000
+    environment:
+      REACT_APP_API_URL: http://localhost:8080
+      REACT_APP_WS_URL: ws://localhost:8080

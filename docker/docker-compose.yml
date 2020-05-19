@@ -1,0 +1,49 @@
+version: '3'
+services:
+  astroplant-database:
+    build: ../database
+    environment:
+      POSTGRES_DB: astroplant
+      POSTGRES_USER: astroplant
+      POSTGRES_PASSWORD: astroplant
+    ports:
+      - 5432:5432
+  mqtt-broker:
+    image: eclipse-mosquitto:1.6.8
+    ports:
+      - 1883:1883
+    volumes:
+      - ./mqtt-broker/config:/mosquitto/config:ro
+  astroplant-mqtt-connector:
+    build:
+        context: ..
+        dockerfile: ./mqtt-connector/Dockerfile
+    depends_on:
+      - mqtt-broker
+    environment:
+      MQTT_HOST: mqtt-broker
+      MQTT_USERNAME: server
+      MQTT_PASSWORD: abcdef
+      DATABASE_URL: postgres+psycopg2://astroplant:astroplant@astroplant-database/astroplant
+      LOG_LEVEL: DEBUG
+  astroplant-api:
+    build: ../../astroplant-api
+    ports:
+      - 8080:8080
+    depends_on:
+      - astroplant-database
+      - mqtt-broker
+    environment:
+      DATABASE_URL: postgres://astroplant:astroplant@astroplant-database/astroplant
+      MQTT_HOST: mqtt-broker
+      MQTT_USERNAME: server
+      MQTT_PASSWORD: abcdef
+  astroplant-frontend-web:
+    build: ../../astroplant-frontend-web
+    depends_on:
+      - astroplant-api
+    ports:
+      - 3000:3000
+    environment:
+      REACT_APP_API_URL: http://localhost:8080
+      REACT_APP_WS_URL: ws://localhost:8080
