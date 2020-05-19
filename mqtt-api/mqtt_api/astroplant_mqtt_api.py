@@ -30,8 +30,7 @@ class Server(object):
     The MQTT API server.
     """
 
-    def __init__(self, host, port, username, password, kafka_producer,
-                 keepalive=60):
+    def __init__(self, host, port, username, password, kafka_producer, keepalive=60):
         self._host = host
         self._port = port
         self._keepalive = keepalive
@@ -47,11 +46,7 @@ class Server(object):
 
         self._mqtt_client.reconnect_delay_set(min_delay=1, max_delay=128)
 
-        self._mqtt_client.username_pw_set(
-            username=username,
-            password=password
-        )
-
+        self._mqtt_client.username_pw_set(username=username, password=password)
 
     def start(self):
         """
@@ -60,9 +55,7 @@ class Server(object):
         logger.info("Server starting.")
         logger.debug(f"MQTT connecting to {self._host}:{self._port}.")
         self._mqtt_client.connect(
-            host=self._host,
-            port=self._port,
-            keepalive=self._keepalive,
+            host=self._host, port=self._port, keepalive=self._keepalive,
         )
         self._mqtt_client.loop_forever()
         logger.info("MQTT stopped.")
@@ -78,10 +71,9 @@ class Server(object):
         self.connected = True
         # Subscribe to multiple topics.
         # Use QoS=2 to ensure exactly once delivery from the broker.
-        self._mqtt_client.subscribe([
-            ('kit/+/measurement/raw', 2),
-            ('kit/+/measurement/aggregate', 2)
-        ])
+        self._mqtt_client.subscribe(
+            [("kit/+/measurement/raw", 2), ("kit/+/measurement/aggregate", 2)]
+        )
 
     def _on_disconnect(self, client, user_data, rc):
         logger.info("MQTT disconnected.")
@@ -95,8 +87,7 @@ class Server(object):
             raise
         except UnrecognizedTopicError as e:
             logger.warning(
-                f"Message {self._message_id}: "
-                f"unrecognized MQTT topic: {e.topic}"
+                f"Message {self._message_id}: " f"unrecognized MQTT topic: {e.topic}"
             )
         except CapnpDecoderError as e:
             logger.warning(
@@ -115,10 +106,10 @@ class Server(object):
         topic = msg.topic.split("/")
 
         if (
-                len(topic) != 4
-                or topic[0] != 'kit'
-                or topic[2] != 'measurement'
-                or not topic[3] in ['raw', 'aggregate']
+            len(topic) != 4
+            or topic[0] != "kit"
+            or topic[2] != "measurement"
+            or not topic[3] in ["raw", "aggregate"]
         ):
             raise UnrecognizedTopicError(msg.topic)
 
@@ -128,28 +119,33 @@ class Server(object):
         message = None
         if message_type == "raw":
             try:
-                raw_measurement = astroplant_capnp.RawMeasurement.from_bytes_packed(msg.payload)
+                raw_measurement = astroplant_capnp.RawMeasurement.from_bytes_packed(
+                    msg.payload
+                )
             except Exception as e:
                 raise CapnpDecoderError(kit_serial)
             logger.debug(f"Message {message_id}: decoded {raw_measurement}")
-            raw_measurement = astroplant_capnp.RawMeasurement.new_message(**raw_measurement.to_dict())
+            raw_measurement = astroplant_capnp.RawMeasurement.new_message(
+                **raw_measurement.to_dict()
+            )
             raw_measurement.kitSerial = kit_serial
             message = raw_measurement.to_bytes_packed()
         elif message_type == "aggregate":
             try:
-                aggregate_measurement = astroplant_capnp.AggregateMeasurement.from_bytes_packed(msg.payload)
+                aggregate_measurement = astroplant_capnp.AggregateMeasurement.from_bytes_packed(
+                    msg.payload
+                )
             except:
                 raise CapnpDecoderError(kit_serial)
             logger.debug(f"Message {message_id}: decoded {aggregate_measurement}")
-            aggregate_measurement = astroplant_capnp.AggregateMeasurement.new_message(**aggregate_measurement.to_dict())
+            aggregate_measurement = astroplant_capnp.AggregateMeasurement.new_message(
+                **aggregate_measurement.to_dict()
+            )
             aggregate_measurement.kitSerial = kit_serial
             message = aggregate_measurement.to_bytes_packed()
 
         if message is not None:
-            result = self._kafka_producer.send(
-                topic=message_type,
-                value=message,
-            )
+            result = self._kafka_producer.send(topic=message_type, value=message,)
             result.add_callback(
                 lambda res: logger.debug(
                     f"Message {message_id}: successfully sent to Kafka. "
@@ -165,43 +161,43 @@ class Server(object):
 
 
 if __name__ == "__main__":
-    logger = logging.getLogger('astroplant.mqtt_api')
+    logger = logging.getLogger("astroplant.mqtt_api")
     logger.setLevel(logging.DEBUG)
 
     ch = logging.StreamHandler()
-    ch.setLevel(logging.getLevelName(os.environ.get('LOG_LEVEL', 'INFO')))
+    ch.setLevel(logging.getLevelName(os.environ.get("LOG_LEVEL", "INFO")))
 
     formatter = logging.Formatter(
-        '%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s'
+        "%(asctime)s - %(threadName)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
     logger.debug("Creating Kafka producer.")
-    kafka_host = os.environ.get('KAFKA_HOST', 'kafka.ops')
-    kafka_port = os.environ.get('KAFKA_PORT', '9092')
-    kafka_username = os.environ.get('KAFKA_USERNAME')
-    kafka_password = os.environ.get('KAFKA_PASSWORD')
+    kafka_host = os.environ.get("KAFKA_HOST", "kafka.ops")
+    kafka_port = os.environ.get("KAFKA_PORT", "9092")
+    kafka_username = os.environ.get("KAFKA_USERNAME")
+    kafka_password = os.environ.get("KAFKA_PASSWORD")
 
     logger.info(f"Kafka bootstrapping to {kafka_host}:{kafka_port}.")
     kafka_producer = KafkaProducer(
         bootstrap_servers=f"{kafka_host}:{kafka_port}",
         client_id="astroplant-mqtt-kafka-connector",
-        acks=1, # Topic leader must acknowledge our messages.
+        acks=1,  # Topic leader must acknowledge our messages.
         security_protocol="SASL_PLAINTEXT" if kafka_username else "PLAINTEXT",
         sasl_mechanism="PLAIN" if kafka_username else None,
         sasl_plain_username=kafka_username,
-        sasl_plain_password=kafka_password
+        sasl_plain_password=kafka_password,
     )
 
-    logger.debug('Creating server.')
+    logger.debug("Creating server.")
     server = Server(
-        host=os.environ.get('MQTT_HOST', 'mqtt.ops'),
-        port=int(os.environ.get('MQTT_PORT', '1883')),
-        username=os.environ.get('MQTT_USERNAME', 'server'),
-        password=os.environ.get('MQTT_PASSWORD', ''),
-        kafka_producer=kafka_producer
+        host=os.environ.get("MQTT_HOST", "mqtt.ops"),
+        port=int(os.environ.get("MQTT_PORT", "1883")),
+        username=os.environ.get("MQTT_USERNAME", "server"),
+        password=os.environ.get("MQTT_PASSWORD", ""),
+        kafka_producer=kafka_producer,
     )
 
     server.start()

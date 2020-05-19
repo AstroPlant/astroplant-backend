@@ -33,20 +33,23 @@ def _run_connector(db, kafka_consumer, stream_type):
 
     logger.debug("Connector starting.")
 
-
     for record in kafka_consumer:
         payload = record.value
         received_measurement = None
         if stream_type == "aggregate":
             try:
-                received_measurement = astroplant_capnp.AggregateMeasurement.from_bytes_packed(payload)
+                received_measurement = astroplant_capnp.AggregateMeasurement.from_bytes_packed(
+                    payload
+                )
             except:
                 # Could not decode message.
                 logger.warning(f"Could not decode message: {payload}")
                 continue
         elif stream_type == "raw":
             try:
-                received_measurement = astroplant_capnp.RawMeasurement.from_bytes_packed(payload)
+                received_measurement = astroplant_capnp.RawMeasurement.from_bytes_packed(
+                    payload
+                )
             except:
                 # Could not decode message.
                 logger.warning(f"Could not decode message: {payload}")
@@ -54,10 +57,14 @@ def _run_connector(db, kafka_consumer, stream_type):
 
         try:
             kit = (
-                db.Session.query(d.Kit).filter(d.Kit.serial == received_measurement.kitSerial).one()
+                db.Session.query(d.Kit)
+                .filter(d.Kit.serial == received_measurement.kitSerial)
+                .one()
             )
             peripheral = (
-                db.Session.query(d.Peripheral).filter(d.Peripheral.id == received_measurement.peripheral).one()
+                db.Session.query(d.Peripheral)
+                .filter(d.Peripheral.id == received_measurement.peripheral)
+                .one()
             )
             print(peripheral.kit_configuration)
 
@@ -119,9 +126,7 @@ def _run_connector(db, kafka_consumer, stream_type):
             # In this way, the consumer will proceed towards the next message.
             kafka_consumer.commit()
         except:
-            logger.exception(
-                f"Unexpected exception caught in message handler."
-            )
+            logger.exception(f"Unexpected exception caught in message handler.")
 
 
 def _db_handle():
