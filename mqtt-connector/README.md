@@ -43,3 +43,7 @@ Set environment variables to configure the program.
 | `KAFKA_USERNAME` | The username for plain sasl authentication. | |
 | `KAFKA_PASSWORD` | The password for plain sasl authentication. | |
 | `LOG_LEVEL` | The minimum level of logs shown. One of `DEBUG`, `INFO`, `WARNING`, `ERROR`. | `INFO` |
+
+# Dockerfile
+The Dockerfile in this directory assumes the build context is at the root of the repository.
+In `./astroplant-backend` you can run: `$ docker build -f mqtt-connector/Dockerfile .`

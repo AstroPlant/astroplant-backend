@@ -36,3 +36,7 @@ $ astroplant-kafka-connector run --stream=aggregate
 ```
 
 See `astroplant-kafka-connector --help` for available commands.
+
+# Dockerfile
+The Dockerfile in this directory assumes the build context is at the root of the repository.
+In `./astroplant-backend` you can run: `$ docker build -f kafka-connector/Dockerfile .`
