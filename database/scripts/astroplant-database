@@ -2,7 +2,7 @@
 
 import os
 import click
-from pathlib import Path
+import pkg_resources
 
 from alembic.config import Config
 from alembic import command
@@ -34,9 +34,10 @@ def create_schema():
     Base.metadata.create_all(db.engine)
     db.Session.commit()
 
-    # then, load the Alembic configuration and generate the
-    # version table, "stamping" it with the most recent rev:
-    alembic_cfg = Config(Path(astroplant_database.__file__).resolve() / "alembic.ini")
+    # Load the Alembic configuration and generate the version table,
+    # "stamping" it with the most recent rev:
+    config_filename = pkg_resources.resource_filename("astroplant_database", "alembic.ini")
+    alembic_cfg = Config(config_filename)
     command.stamp(alembic_cfg, "head")
 
 
