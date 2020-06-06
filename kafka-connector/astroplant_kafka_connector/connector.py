@@ -83,10 +83,9 @@ def run_connector(db, kafka_consumer, stream_type):
                     kit_configuration=peripheral.kit_configuration,
                     peripheral=peripheral,
                     quantity_type_id=received_measurement.quantityType,
-                    aggregate_type=received_measurement.aggregateType,
-                    value=received_measurement.value,
                     datetime_start=utc_from_millis(received_measurement.datetimeStart),
                     datetime_end=utc_from_millis(received_measurement.datetimeEnd),
+                    values={aggregate.type: aggregate.value for aggregate in received_measurement.values},
                 )
             elif stream_type == "raw":
                 print(utc_from_millis(received_measurement.datetime))

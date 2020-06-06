@@ -4,6 +4,7 @@ import datetime
 from sqlalchemy import create_engine, event, exc
 from sqlalchemy import (
     Column,
+    Index,
     ForeignKey,
     UniqueConstraint,
     PrimaryKeyConstraint,
@@ -318,10 +319,10 @@ class AggregateMeasurement(Base):
         nullable=False,
         index=True,
     )
-    aggregate_type = Column(String(50), nullable=False)
-    value = Column(Float, nullable=False)
     datetime_start = Column(DateTime(timezone=True), nullable=False, index=True)
-    datetime_end = Column(DateTime(timezone=True), nullable=False, index=True)
+    datetime_end = Column(DateTime(timezone=True), nullable=False)
+    # A JSON object {[aggregateType: String]: number}.
+    values = Column(JSON, nullable=False)
 
     peripheral = relationship("Peripheral", back_populates="aggregate_measurements")
     kit = relationship("Kit", back_populates="aggregate_measurements")
@@ -329,6 +330,11 @@ class AggregateMeasurement(Base):
         "KitConfiguration", back_populates="aggregate_measurements"
     )
     quantity_type = relationship("QuantityType")
+
+    # The back-end orders by datetime_start DESC, id DESC.
+    __table_args__ = (
+        Index("ix_aggregate_measurements_datetime_start_id", "datetime_start", "id"),
+    )
 
 
 Peripheral.raw_measurements = relationship(

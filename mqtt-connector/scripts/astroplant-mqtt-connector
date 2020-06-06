@@ -81,10 +81,9 @@ def to_database():
                 kit_configuration=peripheral.kit_configuration,
                 peripheral=peripheral,
                 quantity_type_id=message.quantityType,
-                aggregate_type=message.aggregateType,
-                value=message.value,
                 datetime_start=utc_from_millis(message.datetimeStart),
                 datetime_end=utc_from_millis(message.datetimeEnd),
+                values={aggregate.type: aggregate.value for aggregate in message.values},
             )
         db.Session.add(measurement)
         try:
