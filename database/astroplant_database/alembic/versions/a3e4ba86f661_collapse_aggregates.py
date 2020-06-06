@@ -54,7 +54,7 @@ def upgrade():
             AggregateMeasurement.quantity_type_id.asc(),
             AggregateMeasurement.datetime_start.asc(),
         )
-        .yield_per(100)
+        .yield_per(10000)
     ):
         if (
             first_of_group is None
