@@ -75,16 +75,23 @@ def to_database():
                 datetime=utc_from_millis(message.datetime),
             )
         elif message_type == "aggregate":
-            measurement = d.AggregateMeasurement(
-                id=UUID(bytes=message.id),
-                kit=kit,
-                kit_configuration=peripheral.kit_configuration,
-                peripheral=peripheral,
-                quantity_type_id=message.quantityType,
-                datetime_start=utc_from_millis(message.datetimeStart),
-                datetime_end=utc_from_millis(message.datetimeEnd),
-                values={aggregate.type: aggregate.value for aggregate in message.values},
-            )
+            values = {
+                aggregate.type: aggregate.value
+                for aggregate in message.values
+                if 0 < len(aggregate.type) <= 50
+            }
+
+            if 0 < len(values) <= 16:
+                measurement = d.AggregateMeasurement(
+                    id=UUID(bytes=message.id),
+                    kit=kit,
+                    kit_configuration=peripheral.kit_configuration,
+                    peripheral=peripheral,
+                    quantity_type_id=message.quantityType,
+                    datetime_start=utc_from_millis(message.datetimeStart),
+                    datetime_end=utc_from_millis(message.datetimeEnd),
+                    values=values,
+                )
         db.Session.add(measurement)
         try:
             db.Session.commit()

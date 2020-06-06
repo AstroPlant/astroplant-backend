@@ -77,19 +77,24 @@ def run_connector(db, kafka_consumer, stream_type):
 
             measurement = None
             if stream_type == "aggregate":
-                measurement = d.AggregateMeasurement(
-                    id=uuid.UUID(bytes=received_measurement.id),
-                    kit=kit,
-                    kit_configuration=peripheral.kit_configuration,
-                    peripheral=peripheral,
-                    quantity_type_id=received_measurement.quantityType,
-                    datetime_start=utc_from_millis(received_measurement.datetimeStart),
-                    datetime_end=utc_from_millis(received_measurement.datetimeEnd),
-                    values={aggregate.type: aggregate.value for aggregate in received_measurement.values},
-                )
+                values = {
+                    aggregate.type: aggregate.value
+                    for aggregate in received_measurement.values
+                    if 0 < len(aggregate.type) <= 50
+                }
+
+                if 0 < len(values) <= 16:
+                    measurement = d.AggregateMeasurement(
+                        id=uuid.UUID(bytes=received_measurement.id),
+                        kit=kit,
+                        kit_configuration=peripheral.kit_configuration,
+                        peripheral=peripheral,
+                        quantity_type_id=received_measurement.quantityType,
+                        datetime_start=utc_from_millis(received_measurement.datetimeStart),
+                        datetime_end=utc_from_millis(received_measurement.datetimeEnd),
+                        values=values,
+                    )
             elif stream_type == "raw":
-                print(utc_from_millis(received_measurement.datetime))
-                print(uuid.UUID(bytes=received_measurement.id))
                 measurement = d.RawMeasurement(
                     id=uuid.UUID(bytes=received_measurement.id),
                     kit=kit,
