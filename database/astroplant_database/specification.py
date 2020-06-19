@@ -115,9 +115,9 @@ class KitConfiguration(Base):
         nullable=False,
     )
     description = Column(Text, nullable=True)
-    rules_supervisor_module_name = Column(Text, nullable=False)
-    rules_supervisor_class_name = Column(Text, nullable=False)
-    rules = Column(JSON, nullable=False)
+    controller_symbol_location = Column(Text, nullable=False)
+    controller_symbol = Column(Text, nullable=False)
+    control_rules = Column(JSON, nullable=False)
     active = Column(Boolean, nullable=False, server_default="false", index=True)
     never_used = Column(Boolean, nullable=False, server_default="true")
 
@@ -178,8 +178,8 @@ class PeripheralDefinition(Base):
     description = Column(Text, nullable=True)
     brand = Column(String(100), nullable=True)
     model = Column(String(100), nullable=True)
-    module_name = Column(String(255), nullable=False)
-    class_name = Column(String(255), nullable=False)
+    symbol_location = Column(String(255), nullable=False)
+    symbol = Column(String(255), nullable=False)
 
     # A JSON schema http://json-schema.org/.
     configuration_schema = Column(JSON, nullable=False)
