@@ -10,7 +10,16 @@ from sqlalchemy import (
     PrimaryKeyConstraint,
     CheckConstraint,
 )
-from sqlalchemy import Integer, Float, String, Text, DateTime, Boolean, DECIMAL
+from sqlalchemy import (
+    Integer,
+    BigInteger,
+    Float,
+    String,
+    Text,
+    DateTime,
+    Boolean,
+    DECIMAL,
+)
 from sqlalchemy import types, Table
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.ext.declarative import declarative_base
@@ -337,6 +346,46 @@ class AggregateMeasurement(Base):
     )
 
 
+class Media(Base):
+    """
+    Model to hold media links and metadata.
+    """
+
+    __tablename__ = "media"
+
+    id = Column(UUID(as_uuid=True), primary_key=True)
+    peripheral_id = Column(
+        Integer,
+        ForeignKey(Peripheral.id, onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    kit_id = Column(
+        Integer,
+        ForeignKey(Kit.id, onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    kit_configuration_id = Column(
+        Integer,
+        ForeignKey(KitConfiguration.id, onupdate="CASCADE", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    datetime = Column(DateTime(timezone=True), index=True, nullable=False)
+
+    name = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    metadata_ = Column("metadata", JSON, nullable=False)
+    size = Column(BigInteger, nullable=False)
+
+    peripheral = relationship("Peripheral", back_populates="media")
+    kit = relationship("Kit", back_populates="media")
+    kit_configuration = relationship("KitConfiguration", back_populates="media")
+
+    __table_args__ = (CheckConstraint("size >= 0", name="size_positive"),)
+
+
 Peripheral.raw_measurements = relationship(
     "RawMeasurement", order_by=RawMeasurement.datetime, back_populates="peripheral"
 )
@@ -344,6 +393,9 @@ Peripheral.aggregate_measurements = relationship(
     "AggregateMeasurement",
     order_by=AggregateMeasurement.datetime_end,
     back_populates="peripheral",
+)
+Peripheral.media = relationship(
+    "Media", order_by=Media.datetime, back_populates="peripheral",
 )
 Kit.raw_measurements = relationship(
     "RawMeasurement", order_by=RawMeasurement.datetime, back_populates="kit"
@@ -353,6 +405,7 @@ Kit.aggregate_measurements = relationship(
     order_by=AggregateMeasurement.datetime_end,
     back_populates="kit",
 )
+Kit.media = relationship("Media", order_by=Media.datetime, back_populates="kit")
 KitConfiguration.raw_measurements = relationship(
     "RawMeasurement",
     order_by=RawMeasurement.datetime,
@@ -362,6 +415,9 @@ KitConfiguration.aggregate_measurements = relationship(
     "AggregateMeasurement",
     order_by=AggregateMeasurement.datetime_end,
     back_populates="kit_configuration",
+)
+KitConfiguration.media = relationship(
+    "Media", order_by=Media.datetime, back_populates="kit_configuration",
 )
 
 
