@@ -2,6 +2,7 @@ import copy
 
 from .specification import DatabaseManager, QuantityType, PeripheralDefinition
 
+
 def insert_definitions(db: DatabaseManager, simulation_definitions):
     qt_temperature = QuantityType(
         physical_quantity="Temperature",
@@ -18,9 +19,7 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
     db.Session.add(qt_pressure)
 
     qt_humidity = QuantityType(
-        physical_quantity="Humidity",
-        physical_unit="Percent",
-        physical_unit_symbol="%",
+        physical_quantity="Humidity", physical_unit="Percent", physical_unit_symbol="%",
     )
     db.Session.add(qt_humidity)
 
@@ -69,8 +68,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
             ),
             brand="AstroPlant Virtual",
             model="Temperature",
-            module_name="astroplant_simulation.sensors",
-            class_name="Temperature",
+            symbol_location="astroplant_simulation.sensors",
+            symbol="Temperature",
             quantity_types=[qt_temperature],
             configuration_schema={
                 "type": "object",
@@ -83,13 +82,11 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
 
         pd_v_pressure = PeripheralDefinition(
             name="Virtual pressure sensor",
-            description=(
-                "A virtual pressure sensor using the environment simulation."
-            ),
+            description=("A virtual pressure sensor using the environment simulation."),
             brand="AstroPlant Virtual",
             model="Pressure",
-            module_name="astroplant_simulation.sensors",
-            class_name="Pressure",
+            symbol_location="astroplant_simulation.sensors",
+            symbol="Pressure",
             quantity_types=[qt_pressure],
             configuration_schema={
                 "type": "object",
@@ -105,8 +102,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
             description=("A virtual barometer using the environment simulation."),
             brand="AstroPlant Virtual",
             model="Barometer",
-            module_name="astroplant_simulation.sensors",
-            class_name="Barometer",
+            symbol_location="astroplant_simulation.sensors",
+            symbol="Barometer",
             quantity_types=[qt_temperature, qt_pressure, qt_humidity],
             configuration_schema={
                 "type": "object",
@@ -122,8 +119,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
             description=("A virtual heater using the environment simulation."),
             brand="AstroPlant Virtual",
             model="Heater",
-            module_name="astroplant_simulation.actuators",
-            class_name="Heater",
+            symbol_location="astroplant_simulation.actuators",
+            symbol="Heater",
             quantity_types=[],
             configuration_schema={"type": "null", "default": None},
             command_schema={
@@ -140,8 +137,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
         description=("Logs aggregate measurement data locally."),
         brand="AstroPlant",
         model="Logger",
-        module_name="peripheral",
-        class_name="LocalDataLogger",
+        symbol_location="peripheral",
+        symbol="LocalDataLogger",
         configuration_schema={
             "type": "object",
             "title": "Configuration",
@@ -164,8 +161,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
         brand="Asair",
         model="AM2302",
         quantity_types=[qt_temperature, qt_humidity],
-        module_name="astroplant_peripheral_device_library.dht22",
-        class_name="Dht22",
+        symbol_location="astroplant_peripheral_device_library.dht22",
+        symbol="Dht22",
         configuration_schema={
             "type": "object",
             "title": "Configuration",
@@ -189,8 +186,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
         brand=None,
         model="MH-Z19",
         quantity_types=[qt_concentration],
-        module_name="astroplant_peripheral_device_library.mh_z19",
-        class_name="MhZ19",
+        symbol_location="astroplant_peripheral_device_library.mh_z19",
+        symbol="MhZ19",
         configuration_schema={
             "type": "object",
             "title": "Configuration",
@@ -214,8 +211,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
         brand=None,
         model="BH1750",
         quantity_types=[qt_light_intensity],
-        module_name="astroplant_peripheral_device_library.bh1750",
-        class_name="Bh1750",
+        symbol_location="astroplant_peripheral_device_library.bh1750",
+        symbol="Bh1750",
         configuration_schema={
             "type": "object",
             "title": "Configuration",
@@ -239,8 +236,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
         brand=None,
         model="DS18B20",
         quantity_types=[qt_temperature],
-        module_name="astroplant_peripheral_device_library.ds18b20",
-        class_name="Ds18b20",
+        symbol_location="astroplant_peripheral_device_library.ds18b20",
+        symbol="Ds18b20",
         configuration_schema={
             "type": "object",
             "title": "Configuration",
@@ -262,8 +259,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
         description="AstroPlant fans controlled through PWM.",
         brand=None,
         model="24V DC",
-        module_name="astroplant_peripheral_device_library.pwm",
-        class_name="Pwm",
+        symbol_location="astroplant_peripheral_device_library.pwm",
+        symbol="Pwm",
         configuration_schema={
             "type": "object",
             "title": "Configuration",
@@ -293,8 +290,8 @@ def insert_definitions(db: DatabaseManager, simulation_definitions):
         description="AstroPlant led panel controlled through PWM.",
         brand="AstroPlant",
         model="mk06",
-        module_name="astroplant_peripheral_device_library.led_panel",
-        class_name="LedPanel",
+        symbol_location="astroplant_peripheral_device_library.led_panel",
+        symbol="LedPanel",
         configuration_schema={
             "type": "object",
             "title": "Configuration",
