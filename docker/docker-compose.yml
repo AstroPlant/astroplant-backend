@@ -14,6 +14,28 @@ services:
       - 1883:1883
     volumes:
       - ./mqtt-broker/config:/mosquitto/config:ro
+  minio:
+    image: minio/minio:RELEASE.2020-06-22T03-12-50Z
+    ports:
+      - 9000:9000
+    environment:
+      MINIO_BROWSER: "on"
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: miniopassword
+    volumes:
+      - ./data/minio:/data
+    command: server /data
+  create-minio-buckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+        sleep 5 &&
+        mc config host add astroplant http://minio:9000 admin miniopassword &&
+        mc mb astroplant/kit-media &&
+        exit 0
+      "
   astroplant-mqtt-connector:
     build:
         context: ..
@@ -38,6 +60,9 @@ services:
       MQTT_HOST: mqtt-broker
       MQTT_USERNAME: server
       MQTT_PASSWORD: abcdef
+      AWS_S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: miniopassword
   astroplant-frontend-web:
     build: ../../astroplant-frontend-web
     depends_on:
