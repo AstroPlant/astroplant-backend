@@ -5,7 +5,8 @@
     url = "github:edolstra/flake-compat";
     flake = false;
   };
-  outputs = { self, nixpkgs, flake-utils, ... }:
+  inputs.astroplant.url = "github:astroplant/astroplant-api";
+  outputs = { self, nixpkgs, flake-utils, astroplant, ... }:
     flake-utils.lib.eachDefaultSystem
       (system:
         let
@@ -15,6 +16,7 @@
           packages.mosquitto-go-auth = pkgs.callPackage ./pkgs/mosquitto-go-auth.nix { };
           nixosModules.database = import ./services/database.nix;
           nixosModules.mqtt = import ./services/mqtt.nix;
+          nixosModules.mqtt-ingest = import ./services/mqtt-ingest.nix astroplant;
           devShell = pkgs.mkShell {
             venvDir = "./.venv";
             buildInputs = with pkgs; let
@@ -47,6 +49,7 @@
           }
           self.nixosModules."x86_64-linux".mqtt
           self.nixosModules."x86_64-linux".database
+          self.nixosModules."x86_64-linux".mqtt-ingest
           ({ pkgs, ... }: {
             system.stateVersion = "22.11";
             boot.isContainer = true;
@@ -71,6 +74,12 @@
                 # Password: "abcdef"
                 hashedPassword = "PBKDF2$sha512$100000$K7yuzFFHfm$ApJQCKmfWDjcxkkRD61UdsqQRQEYHAlFCRiSZdKYL60YhuStXat8XhmWAWn/ODjUcX2vS7/MveHHTTOWGu2QLw==";
               };
+            };
+            astroplant.services.mqtt-ingest = {
+              enable = true;
+              mqttUser = "astroplant-mqtt-ingest";
+              mqttPassword = "abcdef";
+              dbUrl = "postgres://astroplant:astroplant@localhost/astroplant";
             };
           })
         ];
