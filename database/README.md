@@ -29,14 +29,14 @@ kit = db.Session.query(d.Kit).filter(d.Kit.serial == "k-abc-def-ghi").one()
 To install the Python package using pip, run:
 
 ```shell
-$ pip install "git+https://github.com/AstroPlant/astroplant-backend.git#egg=astroplant-database&subdirectory=database"
+$ python3 -m pip install "git+https://github.com/AstroPlant/astroplant-backend.git#egg=astroplant-database[cli]&subdirectory=database"
 ```
 
 # Installing the module for development
 Inside the `astroplant-backend/database` directory:
 
 ```shell
-$ pip install -e .
+$ python3 -m pip install -e ".[cli]"
 ```
 
 This installs the Python package as editable and makes the `astroplant-database` program available.
