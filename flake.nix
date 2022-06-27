@@ -17,6 +17,7 @@
           nixosModules.database = import ./services/database.nix;
           nixosModules.mqtt = import ./services/mqtt.nix;
           nixosModules.mqtt-ingest = import ./services/mqtt-ingest.nix astroplant;
+          nixosModules.api = import ./services/api.nix astroplant;
           devShell = pkgs.mkShell {
             venvDir = "./.venv";
             buildInputs = with pkgs; let
@@ -50,6 +51,7 @@
           self.nixosModules."x86_64-linux".mqtt
           self.nixosModules."x86_64-linux".database
           self.nixosModules."x86_64-linux".mqtt-ingest
+          self.nixosModules."x86_64-linux".api
           ({ pkgs, ... }: {
             system.stateVersion = "22.11";
             boot.isContainer = true;
@@ -59,7 +61,18 @@
               neovim
               mosquitto
             ];
-            services.nginx.enable = true;
+            services.nginx = {
+              enable = true;
+              recommendedOptimisation = true;
+              recommendedGzipSettings = true;
+              recommendedProxySettings = true;
+              virtualHosts."localhost" = {
+                default = true;
+                locations."/" = {
+                  proxyPass = "http://127.0.0.1:8080";
+                };
+              };
+            };
             astroplant.services.database.enable = true;
             astroplant.services.database.listenRemote = true;
             astroplant.services.mqtt.enable = true;
@@ -80,6 +93,16 @@
               mqttUser = "astroplant-mqtt-ingest";
               mqttPassword = "abcdef";
               dbUrl = "postgres://astroplant:astroplant@localhost/astroplant";
+            };
+            astroplant.services.api = {
+              enable = true;
+              mqttUser = "astroplant-api";
+              mqttPassword = "abcdef";
+              dbUrl = "postgres://astroplant:astroplant@localhost/astroplant";
+              signerKeyFile = pkgs.writeText "api-signer-key" ''
+                this is not a secure key
+                only use it for testing
+              '';
             };
           })
         ];
