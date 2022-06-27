@@ -15,10 +15,13 @@ in
       enable = true;
       ensureDatabases = [ "astroplant" ];
       enableTCPIP = cfg.listenRemote;
-      authentication = if cfg.listenRemote then ''
-        host all all 0.0.0.0/0 md5
-        host all all ::/0 md5
-      '' else "";
+      authentication =
+        if cfg.listenRemote then
+          lib.mkForce ''
+            local all all trust
+            host all all 0.0.0.0/0 md5
+            host all all ::/0 md5
+          '' else "";
       initialScript = pkgs.writeText "initScript" ''
         CREATE USER astroplant WITH PASSWORD 'astroplant';
         GRANT ALL PRIVILEGES ON DATABASE astroplant TO astroplant;
