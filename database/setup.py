@@ -16,7 +16,15 @@ setup(
         "astroplant_database.alembic.versions",
     ],
     include_package_data=True,
-    install_requires=["sqlalchemy~=1.3",],
-    extras_require={"cli": ["click~=7.0", "psycopg2~=2.8", "alembic~=1.3",]},
+    install_requires=[
+        "sqlalchemy~=1.4",
+    ],
+    extras_require={
+        "cli": [
+            "click~=8.0",
+            "psycopg2~=2.8",
+            "alembic~=1.3",
+        ]
+    },
     scripts=["scripts/astroplant-database"],
 )
