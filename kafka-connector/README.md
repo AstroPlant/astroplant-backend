@@ -19,7 +19,7 @@ Set environment variables to configure the program.
 
 | Variable | Description | Default |
 |-|-|-|
-| `DATABASE_URL` | The connection URL of the database. | `postgres+psycopg2://astroplant:astroplant@localhost/astroplant` |
+| `DATABASE_URL` | The connection URL of the database. | `postgresql+psycopg2://astroplant:astroplant@localhost/astroplant` |
 | `KAFKA_HOST` | The hostname of one Kafka broker in the cluster. | `localhost` |
 | `KAFKA_PORT` | The port of the Kafka broker. | `9092` |
 | `KAFKA_USERNAME` | The username for plain sasl authentication. | |

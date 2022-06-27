@@ -11,7 +11,7 @@ fileConfig(config.config_file_name)
 target_metadata = Base.metadata
 
 def get_url():
-    return os.getenv("DATABASE_URL", "postgres+psycopg2://astroplant:astroplant@localhost/astroplant")
+    return os.getenv("DATABASE_URL", "postgresql+psycopg2://astroplant:astroplant@localhost/astroplant")
 
 
 def run_migrations_offline():

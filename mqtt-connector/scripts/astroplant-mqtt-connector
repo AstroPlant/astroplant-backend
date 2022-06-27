@@ -41,7 +41,7 @@ def to_database():
     db = d.DatabaseManager(
         os.environ.get(
             "DATABASE_URL",
-            "postgres+psycopg2://astroplant:astroplant@localhost/astroplant",
+            "postgresql+psycopg2://astroplant:astroplant@localhost/astroplant",
         )
     )
 

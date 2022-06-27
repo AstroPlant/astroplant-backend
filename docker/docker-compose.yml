@@ -46,7 +46,7 @@ services:
       MQTT_HOST: mqtt-broker
       MQTT_USERNAME: server
       MQTT_PASSWORD: abcdef
-      DATABASE_URL: postgres+psycopg2://astroplant:astroplant@astroplant-database/astroplant
+      DATABASE_URL: postgresql+psycopg2://astroplant:astroplant@astroplant-database/astroplant
       LOG_LEVEL: DEBUG
   astroplant-api:
     build: ../../astroplant-api

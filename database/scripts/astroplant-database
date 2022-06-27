@@ -14,7 +14,7 @@ from astroplant_database import fixtures
 
 def _get_url():
     return os.getenv(
-        "DATABASE_URL", "postgres+psycopg2://astroplant:astroplant@localhost/astroplant"
+        "DATABASE_URL", "postgresql+psycopg2://astroplant:astroplant@localhost/astroplant"
     )
 
 

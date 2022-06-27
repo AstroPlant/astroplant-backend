@@ -7,7 +7,7 @@ The `astroplant-database` program provides utilities to create the AstroPlant da
 To create a database and insert AstroPlant's quantity types and peripheral device definitions into it, run:
 
 ```shell
-$ export DATABASE_URL=postgres+psycopg2://astroplant:password@database-host/astroplant
+$ export DATABASE_URL=postgresql+psycopg2://astroplant:password@database-host/astroplant
 $ astroplant-database create-schema
 $ astroplant-database insert-definitions --simulation-definitions
 ```
@@ -20,7 +20,7 @@ They can be used in Python code:
 ```python
 import astroplant_database.specification as d
 
-db = d.DatabaseManager("postgres+psycopg2://astroplant:astroplant@localhost/astroplant")
+db = d.DatabaseManager("postgresql+psycopg2://astroplant:astroplant@localhost/astroplant")
 
 kit = db.Session.query(d.Kit).filter(d.Kit.serial == "k-abc-def-ghi").one()
 ```
@@ -47,6 +47,6 @@ Set environment variables to configure the program.
 
 | Variable | Description | Default |
 |-|-|-|
-| `DATABASE_URL` | The connection URL of the database. | `postgres+psycopg2://astroplant:astroplant@localhost/astroplant` |
+| `DATABASE_URL` | The connection URL of the database. | `postgresql+psycopg2://astroplant:astroplant@localhost/astroplant` |
 | `LOG_LEVEL` | The minimum level of logs shown. One of `DEBUG`, `INFO`, `WARNING`, `ERROR`. | `INFO` |
 

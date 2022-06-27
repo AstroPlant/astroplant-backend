@@ -65,7 +65,7 @@ def run(stream_type):
     db = d.DatabaseManager(
         os.environ.get(
             "DATABASE_URL",
-            "postgres+psycopg2://astroplant:astroplant@localhost/astroplant",
+            "postgresql+psycopg2://astroplant:astroplant@localhost/astroplant",
         )
     )
     run_connector(db, kafka_consumer, stream_type)

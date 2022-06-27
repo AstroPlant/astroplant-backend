@@ -54,7 +54,7 @@ services:
       - kafka
       - astroplant-database
     environment:
-      DATABASE_URL: postgres+psycopg2://astroplant:astroplant@astroplant-database/astroplant
+      DATABASE_URL: postgresql+psycopg2://astroplant:astroplant@astroplant-database/astroplant
       KAFKA_HOST: kafka
       LOG_LEVEL: DEBUG
     command: bash -c "sleep 10 ; astroplant-kafka-connector run --stream=raw"
@@ -66,7 +66,7 @@ services:
       - kafka
       - astroplant-database
     environment:
-      DATABASE_URL: postgres+psycopg2://astroplant:astroplant@astroplant-database/astroplant
+      DATABASE_URL: postgresql+psycopg2://astroplant:astroplant@astroplant-database/astroplant
       KAFKA_HOST: kafka
       LOG_LEVEL: DEBUG
     command: bash -c "sleep 10 ; astroplant-kafka-connector run --stream=aggregate"

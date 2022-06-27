@@ -38,7 +38,7 @@ Set environment variables to configure the program.
 | `MQTT_PORT` | The port of the MQTT broker. | `1883` |
 | `MQTT_USERNAME` | The username for MQTT authentication. | `server` |
 | `MQTT_PASSWORD` | The password for MQTT authentication. | |
-| `DATABASE_URL` | The connection URL for the database. | `postgres+psycopg2://astroplant:astroplant@localhost/astroplant` |
+| `DATABASE_URL` | The connection URL for the database. | `postgresql+psycopg2://astroplant:astroplant@localhost/astroplant` |
 | `KAFKA_HOST` | The hostname of one Kafka broker in the cluster. | `localhost` |
 | `KAFKA_PORT` | The port of the Kafka broker. | `9092` |
 | `KAFKA_USERNAME` | The username for plain sasl authentication. | |
