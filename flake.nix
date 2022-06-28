@@ -6,7 +6,8 @@
     flake = false;
   };
   inputs.astroplant.url = "github:astroplant/astroplant-api";
-  outputs = { self, nixpkgs, flake-utils, astroplant, ... }:
+  inputs.astroplant-frontend.url = "github:astroplant/astroplant-frontend-web";
+  outputs = { self, nixpkgs, flake-utils, astroplant, astroplant-frontend, ... }:
     flake-utils.lib.eachDefaultSystem
       (system:
         let
@@ -56,7 +57,7 @@
             system.stateVersion = "22.11";
             boot.isContainer = true;
             networking.hostName = "astroplant-container";
-            networking.firewall.allowedTCPPorts = [ 80 1883 5432 ];
+            networking.firewall.allowedTCPPorts = [ 80 81 1883 5432 ];
             environment.systemPackages = with pkgs; [
               neovim
               mosquitto
@@ -71,6 +72,19 @@
                 locations."/" = {
                   proxyPass = "http://127.0.0.1:8080";
                   proxyWebsockets = true;
+                };
+                listen = [{ addr = "0.0.0.0"; port = 81; }];
+              };
+              virtualHosts."frontend" = {
+                serverName = "frontend";
+                listen = [{ addr = "0.0.0.0"; port = 80; }];
+                root = astroplant-frontend.packageExprs."x86_64-linux".astroplant-frontend {
+                  apiUrl = "http://10.240.1.2:81";
+                  websocketUrl = "ws://10.240.1.2:81/ws";
+                };
+                locations."/" = {
+                  index = "index.html";
+                  tryFiles = "$uri /index.html =404";
                 };
               };
             };
