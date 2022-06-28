@@ -1,12 +1,18 @@
 {
   description = "AstroPlant backend packages and services";
+
   inputs.flake-utils.url = "github:numtide/flake-utils";
   inputs.flake-compat = {
     url = "github:edolstra/flake-compat";
     flake = false;
   };
+
   inputs.astroplant.url = "github:astroplant/astroplant-api";
+  inputs.astroplant.inputs.nixpkgs.follows = "nixpkgs";
+
   inputs.astroplant-frontend.url = "github:astroplant/astroplant-frontend-web";
+  inputs.astroplant-frontend.inputs.nixpkgs.follows = "nixpkgs";
+
   outputs = { self, nixpkgs, flake-utils, astroplant, astroplant-frontend, ... }:
     flake-utils.lib.eachDefaultSystem
       (system:
