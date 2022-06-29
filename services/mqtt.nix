@@ -11,10 +11,16 @@ let
       mapAttrsToList (name: user: "${name}:${user.hashedPassword}") staticUsers
     )
   );
+  anonymousListen = ''
+    listener ${toString cfg._anonymousPort}
+    allow_anonymous true
+  '';
   configFile = pkgs.writeText "mosquitto.conf" ''
     per_listener_settings true
     persistence true
     log_dest stderr
+
+    ${if cfg._anonymousPort != null then anonymousListen else ""}
 
     listener ${toString cfg.port}
     allow_anonymous false
@@ -63,6 +69,11 @@ in
       default = "localhost";
       description = "The address Postgres listens on";
     };
+    _anonymousPort = mkOption {
+      type = types.nullOr types.port;
+      default = null;
+      description = "A listen port accepting users without athentication. Make sure this is not publicly accessible!";
+    };
     port = mkOption {
       type = types.port;
       default = 1883;
@@ -88,6 +99,11 @@ in
       default = "astroplant";
       description = "The Postgres database name";
     };
+    # It would be nice to allow static users to connect only on a specific port,
+    # but mosquitto-go-auth does not correctly support this. Instead we currently
+    # have _anonymousPort that allows clients to connection without authentication.
+    # This can be used on internal networks, but should not be exposed publicly.
+    # See: https://github.com/iegomez/mosquitto-go-auth/issues/213
     staticUsers = mkOption {
       type = types.attrsOf (types.submodule {
         options = {
