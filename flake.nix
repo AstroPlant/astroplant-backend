@@ -22,7 +22,7 @@
         {
           packages.mosquitto-go-auth = pkgs.callPackage ./pkgs/mosquitto-go-auth.nix { };
           nixosModules.database = import ./services/database.nix;
-          nixosModules.mqtt = import ./services/mqtt.nix;
+          nixosModules.mqtt = import ./services/mqtt.nix self.packages.${system}.mosquitto-go-auth;
           nixosModules.mqtt-ingest = import ./services/mqtt-ingest.nix astroplant;
           nixosModules.api = import ./services/api.nix astroplant;
           devShell = pkgs.mkShell {
@@ -48,13 +48,6 @@
       nixosConfigurations.container = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
-          {
-            nixpkgs.overlays = [
-              (self_: super: {
-                mosquitto-go-auth = self.packages."x86_64-linux".mosquitto-go-auth;
-              })
-            ];
-          }
           self.nixosModules."x86_64-linux".mqtt
           self.nixosModules."x86_64-linux".database
           self.nixosModules."x86_64-linux".mqtt-ingest

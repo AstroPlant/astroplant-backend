@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+mosquitto-go-auth: { config, lib, pkgs, ... }:
 let
   cfg = config.astroplant.services.mqtt;
   makeAclFile = staticUsers: with lib; pkgs.writeText "mqtt-acl" (
@@ -25,7 +25,7 @@ let
     listener ${toString cfg.port}
     allow_anonymous false
     use_username_as_clientid true
-    auth_plugin ${pkgs.mosquitto-go-auth}/lib/go-auth.so
+    auth_plugin ${mosquitto-go-auth}/lib/go-auth.so
     auth_plugin_deny_special_chars true
     auth_opt_backends files, postgres
     auth_opt_files_register user, acl
