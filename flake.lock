@@ -1,20 +1,19 @@
 {
   "nodes": {
-    "astroplant": {
+    "astroplant-api": {
       "inputs": {
         "flake-compat": "flake-compat",
         "flake-utils": "flake-utils",
-        "naersk": "naersk",
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1656251189,
-        "narHash": "sha256-lyHds8dlTB5IVQFBuHuqbEs3R60Hbt4g86q2laSMt0U=",
+        "lastModified": 1656633526,
+        "narHash": "sha256-7yQmHiJMRP8FeA2eoFdA1tAWG50pkFmDCNlhSzQ0U4M=",
         "owner": "astroplant",
         "repo": "astroplant-api",
-        "rev": "c0b62c49f8a771b8daab041b26a9a95717353d38",
+        "rev": "5281e7527d387aed2f9511eac303cfd01a155dfb",
         "type": "github"
       },
       "original": {
@@ -138,37 +137,7 @@
         "type": "github"
       }
     },
-    "naersk": {
-      "inputs": {
-        "nixpkgs": "nixpkgs"
-      },
-      "locked": {
-        "lastModified": 1655042882,
-        "narHash": "sha256-9BX8Fuez5YJlN7cdPO63InoyBy7dm3VlJkkmTt6fS1A=",
-        "owner": "nix-community",
-        "repo": "naersk",
-        "rev": "cddffb5aa211f50c4b8750adbec0bbbdfb26bb9f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "naersk",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
-      "locked": {
-        "lastModified": 0,
-        "narHash": "sha256-Cc5hQSMsTzOHmZnYm8OSJ5RNUp22bd5NADWLHorULWQ=",
-        "path": "/nix/store/hcsl8zxvg8jnncid40xnm3drlvdcqd4c-source",
-        "type": "path"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
-      }
-    },
-    "nixpkgs_2": {
       "locked": {
         "lastModified": 0,
         "narHash": "sha256-Cc5hQSMsTzOHmZnYm8OSJ5RNUp22bd5NADWLHorULWQ=",
@@ -182,11 +151,11 @@
     },
     "root": {
       "inputs": {
-        "astroplant": "astroplant",
+        "astroplant-api": "astroplant-api",
         "astroplant-frontend": "astroplant-frontend",
         "flake-compat": "flake-compat_3",
         "flake-utils": "flake-utils_3",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs"
       }
     }
   },

@@ -7,7 +7,7 @@ in
     enable = mkEnableOption "Enables the AstroPlant API service";
     package = mkOption {
       type = types.package;
-      default = astroplant.packages.${pkgs.stdenv.hostPlatform.system}.astroplant;
+      default = astroplant.packages.${pkgs.stdenv.hostPlatform.system}.astroplant-api;
       description = "AstroPlant package to use";
     };
     mqttHost = mkOption {

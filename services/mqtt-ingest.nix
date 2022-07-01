@@ -1,4 +1,4 @@
-astroplant: { config, lib, pkgs, ... }:
+astroplant-api: { config, lib, pkgs, ... }:
 let
   cfg = config.astroplant.services.mqtt-ingest;
 in
@@ -7,7 +7,7 @@ in
     enable = mkEnableOption "Enables the AstroPlant MQTT ingest service";
     package = mkOption {
       type = types.package;
-      default = astroplant.packages.${pkgs.stdenv.hostPlatform.system}.astroplant;
+      default = astroplant-api.packages.${pkgs.stdenv.hostPlatform.system}.astroplant-api;
       description = "AstroPlant package to use";
     };
     mqttHost = mkOption {

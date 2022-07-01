@@ -1,19 +1,25 @@
 {
   description = "AstroPlant backend packages and services";
 
-  inputs.flake-utils.url = "github:numtide/flake-utils";
-  inputs.flake-compat = {
-    url = "github:edolstra/flake-compat";
-    flake = false;
+  inputs = {
+    flake-utils.url = "github:numtide/flake-utils";
+    flake-compat = {
+      url = "github:edolstra/flake-compat";
+      flake = false;
+    };
+
+    astroplant-api = {
+      url = "github:astroplant/astroplant-api";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    astroplant-frontend = {
+      url = "github:astroplant/astroplant-frontend-web";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  inputs.astroplant.url = "github:astroplant/astroplant-api";
-  inputs.astroplant.inputs.nixpkgs.follows = "nixpkgs";
-
-  inputs.astroplant-frontend.url = "github:astroplant/astroplant-frontend-web";
-  inputs.astroplant-frontend.inputs.nixpkgs.follows = "nixpkgs";
-
-  outputs = { self, nixpkgs, flake-utils, astroplant, astroplant-frontend, ... }:
+  outputs = { self, nixpkgs, flake-utils, astroplant-api, astroplant-frontend, ... }:
     flake-utils.lib.eachDefaultSystem
       (system:
         let
@@ -23,14 +29,15 @@
           packages.mosquitto-go-auth = pkgs.callPackage ./pkgs/mosquitto-go-auth.nix { };
           nixosModules.database = import ./services/database.nix;
           nixosModules.mqtt = import ./services/mqtt.nix self.packages.${system}.mosquitto-go-auth;
-          nixosModules.mqtt-ingest = import ./services/mqtt-ingest.nix astroplant;
-          nixosModules.api = import ./services/api.nix astroplant;
+          nixosModules.mqtt-ingest = import ./services/mqtt-ingest.nix astroplant-api;
+          nixosModules.api = import ./services/api.nix astroplant-api;
           devShell = pkgs.mkShell {
             venvDir = "./.venv";
             buildInputs = with pkgs; let
               pythonWithPackages = python3.withPackages (pypkgs: with pypkgs; [
                 pip
                 setuptools
+                pbkdf2
                 psycopg2
                 sqlalchemy
               ]);
