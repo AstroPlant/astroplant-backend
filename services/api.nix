@@ -34,6 +34,26 @@ in
       type = types.str;
       description = "The PostgreSQL connection URL";
     };
+    awsS3Region = mkOption {
+      type = types.str;
+      description = "The S3-like API region.";
+      default = "us-east-1";
+    };
+    awsS3Endpoint = mkOption {
+      type = types.str;
+      description = "The S3-like endpoint.";
+      default = "https://s3.eu-west-1.amazonaws.com";
+    };
+    awsAccessKeyId = mkOption {
+      type = types.nullOr types.str;
+      description = "The object store access key.";
+      default = "http://localhost:9000";
+    };
+    awsSecretAccessKey = mkOption {
+      type = types.nullOr types.str;
+      description = "The object store secret key associated with the access key.";
+      default = null;
+    };
     signerKeyFile = mkOption {
       type = types.path;
       description = "A file containing a signing key. This is used by the AstroPlant API to sign and verify tokens";
@@ -68,6 +88,10 @@ in
         MQTT_PASSWORD = cfg.mqttPassword;
         DATABASE_URL = cfg.dbUrl;
         TOKEN_SIGNER_KEY = toString cfg.signerKeyFile;
+        AWS_S3_REGION = cfg.awsS3Region;
+        AWS_S3_ENDPOINT = cfg.awsS3Endpoint;
+        AWS_ACCESS_KEY_ID = cfg.awsAccessKeyId;
+        AWS_SECRET_ACCESS_KEY = cfg.awsSecretAccessKey;
       };
     };
   };
