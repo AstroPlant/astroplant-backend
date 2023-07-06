@@ -18,16 +18,16 @@ $ tree -L 1
 Clone these repositories:
 
 ```shell
-git clone https://github.com/AstroPlant/astroplant-api.git
-git clone https://github.com/AstroPlant/astroplant-frontend-web.git
-git clone https://github.com/AstroPlant/astroplant-backend.git
+$ git clone https://github.com/AstroPlant/astroplant-api.git
+$ git clone https://github.com/AstroPlant/astroplant-frontend-web.git
+$ git clone https://github.com/AstroPlant/astroplant-backend.git
 ```
 
 Next, run the Compose file:
 
 ```shell
-cd astroplant-backend/docker
-docker-compose up
+$ cd astroplant-backend/docker
+$ docker-compose up
 ```
 
 Wait for everything to build. After a few minutes you can navigate to
