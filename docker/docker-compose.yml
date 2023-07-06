@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: astroplant
       POSTGRES_PASSWORD: astroplant
     ports:
-      - 5432:5432
+      - 5550:5432
   mqtt-broker:
     image: eclipse-mosquitto:1.6.8
     ports:
@@ -36,25 +36,23 @@ services:
         mc mb astroplant/kit-media &&
         exit 0
       "
-  astroplant-mqtt-connector:
-    build:
-        context: ..
-        dockerfile: ./mqtt-connector/Dockerfile
-    depends_on:
-      - mqtt-broker
-    environment:
-      MQTT_HOST: mqtt-broker
-      MQTT_USERNAME: server
-      MQTT_PASSWORD: abcdef
-      DATABASE_URL: postgresql+psycopg2://astroplant:astroplant@astroplant-database/astroplant
-      LOG_LEVEL: DEBUG
-  astroplant-api:
+  astroplant-mqtt-ingest:
     build: ../../astroplant-api
-    ports:
-      - 8080:8080
+    command: ["astroplant-mqtt-ingest"]
     depends_on:
       - astroplant-database
       - mqtt-broker
+    environment:
+      DATABASE_URL: postgres://astroplant:astroplant@astroplant-database/astroplant
+      MQTT_HOST: mqtt-broker
+      MQTT_USERNAME: server
+      MQTT_PASSWORD: abcdef
+      LOG_LEVEL: DEBUG
+  astroplant-api:
+    build: ../../astroplant-api
+    command: ["astroplant-api"]
+    ports:
+      - 8080:8080
     environment:
       DATABASE_URL: postgres://astroplant:astroplant@astroplant-database/astroplant
       MQTT_HOST: mqtt-broker
@@ -68,7 +66,7 @@ services:
     depends_on:
       - astroplant-api
     ports:
-      - 3000:3000
+      - 5173:5173
     environment:
-      REACT_APP_API_URL: http://localhost:8080
-      REACT_APP_WS_URL: ws://localhost:8080
+      VITE_API_URL: http://localhost:8080
+      VITE_WS_URL: ws://localhost:8080

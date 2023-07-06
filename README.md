@@ -1,12 +1,42 @@
-# AstroPlant Back-end
+# AstroPlant Backend
+This repository contains utilities to build the modules that form the
+AstroPlant back-end. The main API, necessary for running the back-end, is
+available at the [astroplant-api](https://github.com/AstroPlant/astroplant-api)
+repository. A front-end UI for interacting with the back-end is available at
+the
+[astroplant-frontend-web](https://github.com/AstroPlant/astroplant-frontend-web)
+repository.
 
-This repository contains several modules that are part of the AstroPlant back-end.
-The modules each have a readme.
-The main API, necessary for running the back-end, is available at the [astroplant-api](https://github.com/AstroPlant/astroplant-api) repository.
-A front-end UI for interacting with the back-end is available at the [astroplant-frontend-web](https://github.com/AstroPlant/astroplant-frontend-web) repository.
+# Description of the back-end architecture
+The AstroPlant back-end consists of various modules.
 
-# Docker Compose
-A Docker Compose file to launch a full back-end including the web front-end is available in the `./docker` subdirectory.
+Communication between kits and the back-end is over MQTT. A service ingests
+measurements over MQTT into the database. The main [AstroPlant
+API](https://github.com/AstroPlant/astroplant-api) implements the
+bi-directional kit RPC. It further implements the HTTP API used by front-end
+clients.
+
+The SQLAlchemy database ORM and some databates utilities are provided by
+`astroplant-database`, available in this repository at `./database`.
+
+# File tree
+- `./database` contains the SQLAlchemy database ORM and utilities;
+- `./docker` contains Docker Compose scripts to spin up a development backend;
+- `./pkgs` contains [nixpkgs](https://nixos.org) package declarations used for
+  backend services (astroplant-api and astroplant-frontend provide their own
+  nixpkgs declarations in their respective repositories); and
+- `./services` contains NixOS service module declarations for the backend
+  modules.
+- `./flake.nix` re-exports the NixOS service module declarations and provides a
+  container declaration to spin up a NixOS-based development backend.
+
+# Creating a development backend
+This repository provides two methods for creating backends for development
+purposes: Docker Compose and a [NixOS](https://nixos.org) container.
+
+## Docker Compose
+A Docker Compose file to launch a development back-end including the web
+front-end is available in the `./docker` subdirectory.
 
 To get started quickly, run:
 
@@ -18,30 +48,19 @@ $ cd astroplant-backend/docker
 $ docker-compose up
 ```
 
-Then navigate to `http://localhost:3000` in your browser.
+Then navigate to `http://localhost:5173` in your browser.
 
-See `./docker` for more details.
+See the `./docker` directory for more details.
 
-# Description of the back-end architecture
+## NixOS container
+A NixOS container declaration is given in `./flake.nix`. On NixOS, you can
+start it imperatively:
 
-The AstroPlant back-end consists of various modules.
+```shell
+$ git clone https://github.com/AstroPlant/astroplant-backend.git
+$ cd astroplant-backend
+$ sudo nixos-container create astroplant --flake .
+$ sudo nixos-container start astroplant
+```
 
-Communication between kits and the back-end is over MQTT.
-Two modules in the back-end handle the MQTT communication.
-Firstly, astroplant-mqtt-connector—in this repository at `./mqtt-connector`—pushes measurements received over MQTT either directly into the database or to Kafka.
-Secondly, the main [AstroPlant API](https://github.com/AstroPlant/astroplant-api) implements the bi-directional kit RPC.
-
-The AstroPlant API further implements the HTTP API used for front-end clients.
-
-The SQLAlchemy database ORM and some databates utilities are provided by `astroplant-database`, available in this repository at `./database`.
-
-# File tree
-
-- `./database` contains the SQLAlchemy database ORM and utilities;
-- `./mqtt-connector` listens to MQTT for measurements by kits, and either places those measurements into the database or passes them on to Kafka;
-- `./kafka-connector` listens to Kafka for measurements, and places them into the database (only used if mqtt-connector is used to forward measurements to Kafka); and
-- `./docker` contains Docker Compose scripts to spin up the back-end.
-
-# Requirements
-The modules have Python 3.7 as a common requirement.
-Please see the individual modules for more information.
+See https://nixos.wiki/wiki/NixOS_Containers for more information.
