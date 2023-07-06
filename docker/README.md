@@ -37,7 +37,29 @@ The API listens at `localhost:8080`. The MQTT broker (for kit connections)
 listens at `localhost:1883`. You can connect to the database at
 `postgres://astroplant:astroplant@localhost/astroplant`.
 
-You might also want to look at
-[astroplant-kit](https://github.com/AstroPlant/astroplant-kit) and
+## Connecting a kit
+Take a look at [astroplant-kit](https://github.com/AstroPlant/astroplant-kit)
+and
 [astroplant-simulation](https://github.com/AstroPlant/astroplant-simulation) to
-connect a (virtual) kit to this backend.
+connect a (virtual) kit to this backend. This Dockerized backend does not
+perform true kit authentication. Instead, it provides wildcard authentication
+with a single predefined username and password. You can use the following
+`kit_config.toml`:
+
+```toml
+[message_broker]
+host = "localhost"
+port = 1883
+
+[message_broker.auth]
+username = "k-develop"
+serial = "<<kit serial as given by the frontend>>"
+secret = "abcdef"
+
+[debug]
+level = "INFO"
+
+[debug.peripheral_display]
+module_name = "astroplant_kit.peripheral"
+class_name = "DebugDisplay"
+```
