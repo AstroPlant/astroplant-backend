@@ -11,4 +11,3 @@ COPY ./docker/init.sh /docker-entrypoint-initdb.d/init.sh
 WORKDIR /usr/src/astroplant-database
 COPY . .
 RUN pip3 install .[cli]
-
