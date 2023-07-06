@@ -1,16 +1,16 @@
 # AstroPlant Backend
 This repository contains utilities to build the modules that form the
-AstroPlant back-end. The main API, necessary for running the back-end, is
+AstroPlant backend. The main API, necessary for running the backend, is
 available at the [astroplant-api](https://github.com/AstroPlant/astroplant-api)
-repository. A front-end UI for interacting with the back-end is available at
+repository. A front-end UI for interacting with the backend is available at
 the
 [astroplant-frontend-web](https://github.com/AstroPlant/astroplant-frontend-web)
 repository.
 
-# Description of the back-end architecture
-The AstroPlant back-end consists of various modules.
+# Description of the backend architecture
+The AstroPlant backend consists of various modules.
 
-Communication between kits and the back-end is over MQTT. A service ingests
+Communication between kits and the backend is over MQTT. A service ingests
 measurements over MQTT into the database. The main [AstroPlant
 API](https://github.com/AstroPlant/astroplant-api) implements the
 bi-directional kit RPC. It further implements the HTTP API used by front-end
@@ -35,7 +35,7 @@ This repository provides two methods for creating backends for development
 purposes: Docker Compose and a [NixOS](https://nixos.org) container.
 
 ## Docker Compose
-A Docker Compose file to launch a development back-end including the web
+A Docker Compose file to launch a development backend including the web
 front-end is available in the `./docker` subdirectory.
 
 To get started quickly, run:

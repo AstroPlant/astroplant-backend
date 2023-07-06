@@ -1,7 +1,7 @@
-# Dockerized AstroPlant back-end
+# Dockerized AstroPlant backend
 The Docker Compose files here serve as a means to quickly get a full
-development AstroPlant back-end setup running, as well as a potential starting
-point for a production back-end.
+development AstroPlant backend setup running, as well as a potential starting
+point for a production backend.
 
 # Getting started
 The Compose files here assume a specific file tree of the `astroplant-api`,
@@ -40,4 +40,4 @@ listens at `localhost:1883`. You can connect to the database at
 You might also want to look at
 [astroplant-kit](https://github.com/AstroPlant/astroplant-kit) and
 [astroplant-simulation](https://github.com/AstroPlant/astroplant-simulation) to
-connect a (virtual) kit to this back-end.
+connect a (virtual) kit to this backend.
