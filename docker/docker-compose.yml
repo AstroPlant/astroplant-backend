@@ -1,7 +1,7 @@
 version: '3'
 services:
   astroplant-database:
-    build: ../database
+    image: postgres:12
     environment:
       POSTGRES_DB: astroplant
       POSTGRES_USER: astroplant
@@ -36,12 +36,31 @@ services:
         mc mb astroplant/kit-media &&
         exit 0
       "
+  astroplant-database-setup:
+    build: ../../astroplant-api
+    depends_on:
+      - astroplant-database
+    entrypoint: >
+      /bin/sh -c "
+        astroplant-admin migrate &&
+        astroplant-admin insert-astroplant-definitions --simulation-definitions &&
+        exit 0
+      "
+    environment:
+      DATABASE_URL: postgres://astroplant:astroplant@astroplant-database/astroplant
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
   astroplant-mqtt-ingest:
     build: ../../astroplant-api
     command: ["astroplant-mqtt-ingest"]
     depends_on:
-      - astroplant-database
-      - mqtt-broker
+      astroplant-database-setup:
+        condition: service_completed_successfully
+      mqtt-broker:
+        condition: service_started
     environment:
       DATABASE_URL: postgres://astroplant:astroplant@astroplant-database/astroplant
       MQTT_HOST: mqtt-broker
@@ -51,6 +70,9 @@ services:
   astroplant-api:
     build: ../../astroplant-api
     command: ["astroplant-api"]
+    depends_on:
+      astroplant-database-setup:
+        condition: service_completed_successfully
     ports:
       - 8080:8080
     environment:
