@@ -16,11 +16,7 @@ API](https://github.com/AstroPlant/astroplant-api) implements the
 bi-directional kit RPC. It further implements the HTTP API used by front-end
 clients.
 
-The SQLAlchemy database ORM and some databates utilities are provided by
-`astroplant-database`, available in this repository at `./database`.
-
 # File tree
-- `./database` contains the SQLAlchemy database ORM and utilities;
 - `./docker` contains Docker Compose scripts to spin up a development backend;
 - `./pkgs` contains [nixpkgs](https://nixos.org) package declarations used for
   backend services (astroplant-api and astroplant-frontend provide their own
